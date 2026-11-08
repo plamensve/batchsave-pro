@@ -2,7 +2,7 @@ import test from "node:test";import assert from "node:assert/strict";
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment} from "../src/services/gmail-visible.js";
 function dom(){
  let clicks=0;
- const download={click(){clicks++}};
+ const download={click(){clicks++},getAttribute:key=>key==="aria-label"?"Download":null};
  const filename={textContent:"invoice_2026.pdf"};
  const card={
    isConnected:true,
