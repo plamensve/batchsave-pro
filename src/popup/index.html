@@ -1,17 +1,24 @@
-<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BatchSave Pro</title><link rel="stylesheet" href="./popup.css"></head>
+<!doctype html><html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BatchSave Pro</title><link rel="stylesheet" href="./popup.css"></head>
 <body><main class="app">
-<header class="header"><div class="brand"><span class="mark">B</span><div><h1>BatchSave <strong>Pro</strong></h1><p>Bulk file downloader</p></div></div><span class="version">BETA</span></header>
-<section class="auth-panel" aria-label="Account and billing">
+<header class="header"><div class="brand"><span class="mark">B</span><div><h1>BatchSave <strong>Pro</strong></h1><p>Files and Gmail attachments</p></div></div><span class="version">0.6</span></header>
+<section class="auth-panel" aria-label="Account">
  <div id="account-status">Checking account…</div>
- <form id="auth-form" hidden><input id="email" type="email" placeholder="Email address" autocomplete="email" required><input id="password" type="password" placeholder="Password (min. 6 characters)" autocomplete="current-password" minlength="6" required><div class="auth-actions"><button class="secondary" type="submit" id="login">Sign in</button><button class="secondary" type="button" id="register">Create account</button></div></form>
- <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Subscribe — €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Manage billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
+ <form id="auth-form" hidden>
+  <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required>
+  <div class="auth-actions"><button id="login" class="secondary" type="submit">Sign in</button><button id="register" class="secondary" type="button">Create account</button><button id="reset-password" class="secondary" type="button">Reset password</button></div>
+ </form>
+ <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
 </section>
-<section class="toolbar"><button id="open-gmail" class="secondary" type="button">📎 Open Gmail attachments</button></section>
-<section class="toolbar"><button id="scan" class="primary">Scan this page</button><button id="select-all" class="secondary" disabled>Select all</button></section>
-<section class="controls"><label class="search-label"><span class="sr-only">Filter filename</span><input id="search" type="search" placeholder="Search filenames or URLs" disabled></label><select id="type" aria-label="Filter type" disabled><option value="relevant">Relevant files</option><option value="attachment">Attachments</option><option value="image">Photos</option><option value="pdf">PDF</option><option value="other">Other files</option><option value="all">All page assets</option></select></section>
+<section class="toolbar"><button id="scan" class="primary" type="button">Scan this page</button><button id="select-all" class="secondary" type="button" disabled>Select all</button></section>
+<section id="gmail-controls" class="gmail-controls" hidden>
+ <div class="gmail-label"><strong>Gmail attachments</strong><span>Google read-only access</span></div>
+ <input id="gmail-query" value="has:attachment" placeholder="Gmail search query" aria-label="Gmail search">
+ <a id="gmail-setup" hidden href="https://github.com/plamensve/batchsave-pro/blob/main/docs/GMAIL_SETUP.md" target="_blank" rel="noreferrer">Configure Google OAuth to enable Gmail scanning</a>
+</section>
+<section class="controls"><label class="search-label"><span class="sr-only">Search filenames</span><input id="search" type="search" placeholder="Search filenames" disabled></label><select id="type" aria-label="Filter" disabled><option value="relevant">Relevant files</option><option value="attachment">Attachments</option><option value="image">Photos</option><option value="pdf">PDF</option><option value="other">Other</option><option value="all">All resources</option></select></section>
 <div class="summary"><span id="count">No files scanned</span><span id="selected">0 selected</span></div>
-<section id="results" class="results" aria-live="polite"><div class="empty">Open a page and click <strong>Scan this page</strong>.</div></section>
-<footer><div class="notice" id="status" role="status">Files are processed locally in your browser.</div><div class="download-actions"><button id="download" class="primary download" disabled>Download files</button><button id="download-zip" class="secondary download" disabled>Download ZIP (max 100 MB)</button></div></footer>
+<section id="results" class="results" aria-live="polite"><div class="empty">Open a page or Gmail and click Scan this page.</div></section>
+<footer><div id="status" class="notice" role="status">Files are processed locally in Chrome.</div><div class="download-actions"><button id="download" class="primary download" disabled>Download files</button><button id="download-zip" class="secondary download" disabled>Download ZIP</button></div></footer>
 </main><script type="module" src="./popup.js"></script></body></html>
