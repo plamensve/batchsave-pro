@@ -32,3 +32,8 @@ export async function billingFunction(name){
  if(!result.url||!result.url.startsWith("https://"))throw Error("Invalid payment URL");
  return result.url;
 }
+
+export async function requestPasswordReset(email){
+ const redirect="https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/account-recovery";
+ return request("/auth/v1/recover?redirect_to="+encodeURIComponent(redirect),{method:"POST",body:JSON.stringify({email})});
+}
