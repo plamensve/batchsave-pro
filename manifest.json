@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "BatchSave Pro — Bulk File Downloader",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Discover and batch download images, PDFs and files from web pages.",
   "permissions": [
     "activeTab",
     "scripting",
     "downloads",
-    "storage"
+    "storage",
+    "permissions"
   ],
   "host_permissions": [
     "https://gcfyaaqqsqrjwujpymjz.supabase.co/*"
@@ -20,5 +21,9 @@
     "service_worker": "src/background/service-worker.js",
     "type": "module"
   },
-  "minimum_chrome_version": "110"
+  "minimum_chrome_version": "110",
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
 }
