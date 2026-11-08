@@ -1,11 +1,11 @@
 {
   "name": "batchsave-pro",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "BatchSave Pro Chrome Manifest V3 extension",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/popup/popup.js && node --check src/background/service-worker.js && node --check src/lib/files.js && node --check src/services/auth.js && node --check src/lib/zip.js && node --check src/services/gmail.js && node --check src/gmail/gmail-page.js"
+    "check": "node --check src/popup/popup.js && node --check src/background/service-worker.js && node --check src/lib/files.js && node --check src/services/auth.js && node --check src/lib/zip.js && node --check src/services/gmail.js && node --check src/gmail/gmail-page.js && node --check src/services/gmail-visible.js"
   }
 }
