@@ -1,21 +1,67 @@
 import {entitlement} from "../services/auth.js";
-chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
- if(message?.type!=="BATCH_DOWNLOAD")return false;
- (async()=>{
-  // Fail closed: no premium operation without fresh server-confirmed entitlement.
+import {batchFolder,isBatchFolder,safeFileName,matchesGmailIntent} from "../lib/download-batch.js";
+
+const GMAIL_INTENT="gmailBatchIntent";
+// A short-lived, narrowly scoped request. Never rename arbitrary browser downloads.
+chrome.downloads.onDeterminingFilename.addListener((item,suggest)=>{
+ chrome.storage.session.get(GMAIL_INTENT).then(async state=>{
+  const intent=state[GMAIL_INTENT];
+  if(!matchesGmailIntent(item,intent)){
+   suggest();return;
+  }
+  // Record the match before suggesting so a reopened popup can inspect the result.
+  await chrome.storage.session.set({[GMAIL_INTENT]:{...intent,handled:true,downloadId:item.id}});
+  suggest({filename:intent.folder+"/"+safeFileName(intent.expectedName),conflictAction:"uniquify"});
+ }).catch(()=>suggest());
+ return true;
+});
+
+async function onMessage(message){
+ if(message?.type==="GET_GMAIL_FOLDER_STATE"){
+  const state=await chrome.storage.session.get(GMAIL_INTENT);
+  const intent=state[GMAIL_INTENT]||null;
+  return {ok:true,handled:!!intent?.handled,downloadId:intent?.downloadId??null,folder:intent?.folder||null};
+ }
+ if(message?.type==="CLEAR_GMAIL_FOLDER"){
+  await chrome.storage.session.remove(GMAIL_INTENT);
+  return {ok:true};
+ }
+ if(message?.type==="PREPARE_GMAIL_DOWNLOAD"){
   const access=await entitlement();
-  if(!access?.access_granted)return {ok:false,error:"Trial expired or no active subscription. Sign in or upgrade."};
+  if(!access?.access_granted)return {ok:false,error:"No active license."};
+  if(!isBatchFolder(message.folder))return {ok:false,error:"Invalid batch folder."};
+  const expectedName=safeFileName(message.expectedName);
+  if(!expectedName||expectedName==="download")return {ok:false,error:"Missing attachment filename."};
+  await chrome.storage.session.set({[GMAIL_INTENT]:{
+   folder:message.folder,expectedName,handled:false,
+   createdAt:Date.now(),expiresAt:Date.now()+25000
+  }});
+  return {ok:true};
+ }
+ if(message?.type==="BATCH_DOWNLOAD"){
+  const access=await entitlement();
+  if(!access?.access_granted)return {ok:false,error:"Trial expired or no active subscription."};
   const items=Array.isArray(message.items)?message.items.slice(0,3000):[];
   if(!items.length)return {ok:false,error:"No files selected"};
+  const folder=batchFolder();
   let started=0,failed=0;
   for(const item of items){
    try{
-    const u=new URL(item.url);if(!["http:","https:"].includes(u.protocol))throw Error("Invalid URL");
-    const filename=String(item.filename||"download").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").slice(0,150)||"download";
-    await chrome.downloads.download({url:u.href,filename:"BatchSave/"+filename,conflictAction:"uniquify",saveAs:false});started++;
+    const u=new URL(item.url);
+    if(!["http:","https:"].includes(u.protocol))throw Error("Invalid URL");
+    const filename=safeFileName(item.filename||"download");
+    await chrome.downloads.download({
+     url:u.href,filename:folder+"/"+filename,conflictAction:"uniquify",saveAs:false
+    });
+    started++;
    }catch{failed++;}
   }
-  return {ok:true,started,failed};
- })().then(sendResponse).catch(e=>sendResponse({ok:false,error:e.message}));
+  return {ok:started>0,started,failed,folder,error:started?"":"No downloads could be started."};
+ }
+ return {ok:false,error:"Unknown message"};
+}
+chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
+ if(!["GET_GMAIL_FOLDER_STATE","CLEAR_GMAIL_FOLDER","PREPARE_GMAIL_DOWNLOAD","BATCH_DOWNLOAD"].includes(message?.type))return false;
+ onMessage(message).then(sendResponse).catch(e=>sendResponse({ok:false,error:e.message}));
  return true;
 });
