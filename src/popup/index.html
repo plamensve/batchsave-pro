@@ -12,14 +12,14 @@
  </form>
  <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
 </section>
-<section class="toolbar"><button id="scan" class="primary" type="button">Scan this page</button><button id="select-all" class="secondary" type="button" disabled>Select all</button></section>
+<section class="toolbar"><button id="scan" class="primary" type="button">Scan this page</button><button id="download" class="primary" type="button" disabled>Download selected</button></section>
 <section id="gmail-controls" class="gmail-controls" hidden>
  <div class="gmail-label"><strong>Gmail attachments</strong><span>Open message · Download files</span></div>
  <a id="gmail-setup" hidden href="https://github.com/plamensve/batchsave-pro/blob/main/docs/GMAIL_SETUP.md" target="_blank" rel="noreferrer">Configure Google OAuth to enable Gmail scanning</a>
 </section>
 <div id="scan-feedback" class="scan-feedback" role="status" aria-live="polite">Open a message in Gmail, then press Scan this page.</div>
 <section class="controls"><label class="search-label"><span class="sr-only">Search filenames</span><input id="search" type="search" placeholder="Search filenames" disabled></label><select id="type" aria-label="Filter" disabled><option value="relevant">Relevant files</option><option value="attachment">Attachments</option><option value="image">Photos</option><option value="pdf">PDF</option><option value="other">Other</option><option value="all">All resources</option></select></section>
-<div class="summary"><span id="count">No files scanned</span><span id="selected">0 selected</span></div>
+<div class="summary"><span id="count">No files scanned</span><button id="select-all" class="mini-select" type="button" disabled>Select all</button><span id="selected">0 selected</span></div>
 <section id="results" class="results" aria-live="polite"><div class="empty">Open a page or Gmail and click Scan this page.</div></section>
-<footer><div id="status" class="notice" role="status">Files are processed locally in Chrome.</div><div class="download-actions"><button id="download" class="primary download" disabled>Download files</button><button id="download-zip" class="secondary download" disabled>Download ZIP</button></div></footer>
+<footer><div id="status" class="notice" role="status">Files are processed locally in Chrome.</div><div class="download-actions"><button id="download-zip" class="secondary download" disabled>Download ZIP</button></div></footer>
 </main><script type="module" src="./popup.js"></script></body></html>
