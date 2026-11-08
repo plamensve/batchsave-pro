@@ -19,3 +19,7 @@
 - The extension cannot bypass DRM, CAPTCHAs, private files or website restrictions.
 - A Chromium extension running on users' devices cannot provide tamper-proof local DRM.
 - This prototype is not ready to accept production payments or for public launch.
+
+## Priority: real email attachments and photos
+
+Gmail attachment downloads are not implemented. They require a stable Chrome extension ID, Google Cloud OAuth client, Gmail API and restricted-scope verification. Generic HTML download links and substantive photos are prioritized now. Do not claim Gmail download support until its API integration works end-to-end.
