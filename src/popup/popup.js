@@ -109,7 +109,7 @@ $("auth-form").addEventListener("submit",async ev=>{
   const email=$("email").value.trim();
   await chrome.storage.local.set({batchsaveLastEmail:email});
   await signIn(email,$("password").value);
-  authFeedback("Signed in successfully.","success");notice("Signed in successfully.");await refreshAccount();
+  notice("Signed in successfully.");await refreshAccount();authFeedback("");
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
   authFeedback(bad?"Supabase rejected these credentials. Check the email and password, or choose Reset password.":`Sign in failed: ${e.message}`,"error");
@@ -147,7 +147,9 @@ async function scanGmail(tabId){
    notice(visible.length+" attached file(s) found. Click Download selected to save them with Gmail.");
    return;
  }
- // No visible Gmail attachment card recognized. Mailbox API can be used after OAuth is configured.
+ // Do not retain stale files from a previous Gmail conversation.
+ showFiles([],"gmail-visible");
+ // Mailbox-wide scanning requires the official Google OAuth flow.
 
  if(!configuredForGmail()){
   notice("No downloadable Gmail attachment cards were found in this open email. For full mailbox scanning, configure Google OAuth. Gmail interface changes may require an updated detector.");
