@@ -108,3 +108,5 @@ $("download-zip").addEventListener("click",async()=>{
  }catch(e){notice("ZIP failed: "+e.message+" Try downloading files individually.");}
  finally{button.disabled=false;updateCount();}
 });
+
+$("open-gmail").addEventListener("click",()=>chrome.tabs.create({url:chrome.runtime.getURL("src/gmail/index.html")}));
