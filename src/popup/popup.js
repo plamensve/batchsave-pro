@@ -38,6 +38,8 @@ function filtered(){
 function updateCount(){
  $("selected").textContent=state.selected.size+" selected";
  $("download").disabled=!state.selected.size||!state.access||state.busy;
+ $("download-zip").hidden=state.source==="gmail-visible";
+ $("download").textContent=state.source==="gmail-visible"?"Download selected":"Download files";
  $("download-zip").disabled=!state.selected.size||!state.access||state.busy||state.source==="gmail-visible";
 }
 function render(){
@@ -69,6 +71,7 @@ function render(){
 function showFiles(files,source){
  state.files=source==="page"?uniqueFiles(files):files;
  state.source=source;state.selected.clear();
+ if(source==="gmail-visible"&&state.files.length===1)state.selected.add(fileKey(state.files[0]));
  $("search").disabled=false;$("type").disabled=false;$("type").value="relevant";render();
 }
 async function refreshAccount(){
@@ -141,7 +144,7 @@ async function scanGmail(tabId){
  const [{result:visible}]=await chrome.scripting.executeScript({target:{tabId},func:scanVisibleGmailAttachments});
  if(visible?.length){
    showFiles(visible,"gmail-visible");
-   notice(visible.length+" attachment(s) found in the open email. Select files and use Download files. ZIP needs Google authorization.");
+   notice(visible.length+" attached file(s) found. Click Download selected to save them with Gmail.");
    return;
  }
  // No visible Gmail attachment card recognized. Mailbox API can be used after OAuth is configured.
@@ -155,7 +158,7 @@ async function scanGmail(tabId){
  await gmailToken(true);
  notice("Reading real Gmail attachments…");
  const response=await listGmailAttachments({
-  query:$("gmail-query").value.trim()||"has:attachment",
+  query:"has:attachment",
   maxResults:35,
   onProgress:(done,total)=>notice("Scanning Gmail messages "+done+"/"+total+"…")
  });
@@ -213,11 +216,11 @@ $("download").addEventListener("click",async()=>{
    if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the original Gmail message first.");
    let completed=0;
    for(const f of files){
-     const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:downloadVisibleGmailAttachment,args:[f.position]});
+     const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:downloadVisibleGmailAttachment,args:[f.position,f.name]});
      if(!result?.ok)throw Error(result?.error||"Gmail download button unavailable");
      completed++;
    }
-   notice("Triggered "+completed+" Gmail download(s) via Gmail buttons. Check Chrome Downloads.");
+   notice("Activated Gmail Download for "+completed+" file(s). Check Chrome Downloads to confirm completion.");
   }else if(state.source==="gmail"){
    let completed=0;
    for(const f of files){
