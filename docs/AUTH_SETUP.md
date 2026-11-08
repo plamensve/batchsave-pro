@@ -29,3 +29,13 @@ The Chrome extension already requests this redirect on `/auth/v1/signup`. The Ed
 - Check that the account panel shows the three-day Stripe trial CTA (payments are disabled until Stripe secrets are configured).
 
 Existing confirmed users can sign in immediately without registering again.
+
+## Reset password
+
+The main popup includes **Reset password**. Supabase sends a recovery email to the account's verified email address. Its link opens the deployed `account-recovery` Edge Function, where the user sets a new password; no password is sent to the browser extension until they sign in again.
+
+Add the following exact address under **Authentication → URL Configuration → Redirect URLs**:
+
+`https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/account-recovery`
+
+Without this allowlisted redirect, Supabase may fall back to the configured Site URL and the reset page will not receive the recovery token.
