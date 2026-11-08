@@ -12,7 +12,7 @@ A Chrome Manifest V3 extension for discovering and downloading linked files and 
 
 ## Subscription
 
-Price: **€9.90 per month**; 72-hour trial begins on initial account creation, independent of billing setup. The Stripe integration will be configured through protected Supabase Edge Functions. Browser-only keys are publishable, never secret.
+Price: **€9.90 per month**; 72-hour trial begins when the customer starts a Stripe Checkout subscription with a card. Stripe automatically charges after the trial unless canceled. Each account is eligible for one trial. The Stripe integration will be configured through protected Supabase Edge Functions. Browser-only keys are publishable, never secret.
 
 This is a developer build, **not ready for Chrome Web Store publication**. Stripe secret values have not been provisioned, and actual payments will remain unavailable until configured and tested.
 
