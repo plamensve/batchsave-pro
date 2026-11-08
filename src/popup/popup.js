@@ -23,13 +23,13 @@ async function refreshAccount(){
  $("account-status").textContent="Checking subscription…";$("auth-form").hidden=true;$("billing-actions").hidden=true;
  try{
  const s=await session();
- if(!s){state.access=false;$("account-status").textContent="Sign in to start your free 72-hour trial.";$("auth-form").hidden=false;updateCount();return;}
+ if(!s){state.access=false;$("account-status").textContent="Sign in to start a 3-day trial through Stripe Checkout.";$("auth-form").hidden=false;updateCount();return;}
  const e=await entitlement();
  state.access=Boolean(e?.access_granted);
  const exp=e?.trial_ends_at?new Date(e.trial_ends_at):null;
  const stillTrial=exp&&exp.getTime()>Date.now();
  const days=stillTrial?Math.ceil((exp.getTime()-Date.now())/3600000):0;
- $("account-status").textContent=state.access?(stillTrial?"Trial active · "+days+" hours left":"Pro subscription active"):"Trial ended · subscription required";
+ $("account-status").textContent=state.access?(stillTrial?"Trial active · "+days+" hours left":"Pro subscription active"):(e?.subscription_status?"Subscription inactive · resubscribe to continue":"Start your 3-day free trial · card required");
  $("billing-actions").hidden=false;$("upgrade").hidden=Boolean(e?.subscription_status==="active"||e?.subscription_status==="trialing");
  $("manage").hidden=!e?.subscription_status;
  }catch(e){state.access=false;$("account-status").textContent="Cannot verify access. Check your connection.";}
