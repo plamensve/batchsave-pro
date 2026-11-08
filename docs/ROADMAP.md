@@ -10,7 +10,7 @@
 - Deploy and configure Stripe Edge Functions with **test-mode** secrets, webhook signature verification and test-mode recurring Price ID.
 - Enable Stripe Checkout promotion-code entry.
 - Configure customer portal, test trial cancellation/payment failures/refunds and replayed webhook events.
-- ZIP downloads, file previews, file size filters, international marketing copy.
+- ZIP built locally with a 100 MB/150-file cap, permission prompt for selected origins. Additional QA required for authenticated sites and memory usage.\n- File previews, file size filters, international marketing copy.
 - Email delivery setup, account/privacy/terms pages, Chrome Store publishing assets and automated browser E2E tests.
 
 ## Security
