@@ -1,6 +1,6 @@
 {
   "name": "batchsave-pro",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "type": "module",
   "description": "BatchSave Pro Chrome Manifest V3 extension",

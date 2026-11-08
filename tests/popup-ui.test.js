@@ -30,3 +30,12 @@ test("Gmail current-message downloads remain license-gated and select their own 
  assert.match(js,/downloadVisibleGmailAttachment,args:\[f.position,f.name\]/);
  assert.match(js,/if\(source==="gmail-visible"&&state.files.length===1\)/);
 });
+
+test("popup shows logged-in account identity and confirms Chrome downloads",()=>{
+ for(const id of ["account-details","account-name","account-email","account-license"])
+  assert.ok(html.includes('id="'+id+'"'),"missing profile field "+id);
+ assert.match(js,/accountUser\(\)/);
+ assert.match(js,/chrome\.downloads\.search/);
+ assert.match(js,/world:"MAIN"/);
+ assert.match(js,/Chrome detected/);
+});

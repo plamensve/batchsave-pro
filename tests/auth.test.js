@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {signIn,requestPasswordReset,signOut,session} from "../src/services/auth.js";
+import {signIn,requestPasswordReset,signOut,session,accountUser} from "../src/services/auth.js";
 
 async function withMock(mockFetch,fn){
  const prevFetch=globalThis.fetch,prevChrome=globalThis.chrome;
@@ -79,4 +79,25 @@ test("revoked refresh token clears expired session",async()=>{
   assert.equal(await session(),null);
   assert.equal(storage.has("batchsaveSession"),false);
  });
+});
+
+test("profile is read from Supabase Auth session when present",async()=>{
+ await withMock(async()=>{throw Error("Unexpected network call");},async storage=>{
+  storage.set("batchsaveSession",{access_token:"good",expires_at:Math.floor(Date.now()/1000)+3600,
+    user:{id:"user-1",email:"test@example.com",user_metadata:{full_name:"Test User"}}});
+  assert.equal((await accountUser()).email,"test@example.com");
+ });
+});
+test("profile is fetched from Supabase Auth when refresh result has no user",async()=>{
+ let urlUsed;
+ await withMock(async(url,options)=>{
+  urlUsed=url;
+  assert.match(options.headers.Authorization,/Bearer good/);
+  return new Response(JSON.stringify({id:"user-1",email:"test@example.com"}),{status:200});
+ },async storage=>{
+  storage.set("batchsaveSession",{access_token:"good",expires_at:Math.floor(Date.now()/1000)+3600});
+  assert.equal((await accountUser()).email,"test@example.com");
+  assert.equal(storage.get("batchsaveSession").user.email,"test@example.com");
+ });
+ assert.match(urlUsed,/\/auth\/v1\/user$/);
 });
