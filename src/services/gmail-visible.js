@@ -83,3 +83,14 @@ export function downloadVisibleGmailAttachment(position,expectedName) {
   button.click();
   return {ok:true,triggered:true};
 }
+
+export function diagnoseVisibleGmailAttachments(){
+  // Intentionally returns counts only; never inspect or transmit email contents.
+  const count=selector=>document.querySelectorAll(selector).length;
+  return {
+    cards:count(".aZo"),
+    downloadDescriptors:count("[download_url]"),
+    namedNodes:count("[data-attachment-id],[data-attachment-name]"),
+    filenameLabels:count(".aV3,.aQy")
+  };
+}
