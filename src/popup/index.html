@@ -4,9 +4,10 @@
 <header class="header"><div class="brand"><span class="mark">B</span><div><h1>BatchSave <strong>Pro</strong></h1><p>Files and Gmail attachments</p></div></div><span class="version">0.6</span></header>
 <section class="auth-panel" aria-label="Account">
  <div id="account-status">Checking account…</div>
+ <div id="auth-feedback" class="auth-feedback" role="status" aria-live="polite" hidden></div>
  <form id="auth-form" hidden>
-  <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required>
+  <input id="email" type="email" placeholder="Email address" autocomplete="email" required aria-label="Account email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required aria-label="Account password">
   <div class="auth-actions"><button id="login" class="secondary" type="submit">Sign in</button><button id="register" class="secondary" type="button">Create account</button><button id="reset-password" class="secondary" type="button">Reset password</button></div>
  </form>
  <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
