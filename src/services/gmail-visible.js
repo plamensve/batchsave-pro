@@ -1,23 +1,19 @@
-// Best-effort access to attachments shown in the open Gmail message.
-// No cookies, hidden Gmail endpoints or mailbox-wide access.
+// Experimental Gmail visible-attachment integration.
+// Runs only on the open Gmail tab; no private endpoints, cookies or email content leaves the tab.
 export function scanVisibleGmailAttachments() {
   const subject=document.querySelector("h2.hP")?.textContent?.trim()||"Open Gmail message";
   const nodes=[...document.querySelectorAll(".aZo,[download_url],[data-attachment-id],[data-attachment-name]")];
   const allowed=/\.(?:pdf|docx?|xlsx?|pptx?|csv|txt|zip|rar|7z|jpe?g|png|gif|webp|heic|bmp|xml|json|eml|msg|mp3|mp4)$/i;
   const decode=value=>{
     let v=String(value||"").trim().replace(/[\u200b-\u200d\ufeff]/g,"");
-    for(let i=0;i<2&&/%[0-9a-f]{2}/i.test(v);i++){
-      try{v=decodeURIComponent(v);}catch{break;}
-    }
+    for(let i=0;i<2&&/%[0-9a-f]{2}/i.test(v);i++){try{v=decodeURIComponent(v);}catch{break;}}
     return v;
   };
   const filename=(node,card)=>{
-    const downloadMeta=card.getAttribute?.("download_url")||
+    const raw=card.getAttribute?.("download_url")||
       card.querySelector?.("[download_url]")?.getAttribute?.("download_url")||
       node.getAttribute?.("download_url")||"";
-    // Gmail has used MIME:type:encoded-filename:attachment-id.
-    // Extract the filename segment; never greedily include the attachment ID.
-    const parts=downloadMeta.split(":");
+    const parts=raw.split(":");
     const candidates=[
       card.getAttribute?.("data-attachment-name"),
       node.getAttribute?.("data-attachment-name"),
@@ -27,70 +23,88 @@ export function scanVisibleGmailAttachments() {
       card.getAttribute?.("title"),
       node.getAttribute?.("title")
     ];
-    for(const raw of candidates){
-      const name=decode(raw);
+    for(const candidate of candidates){
+      const name=decode(candidate);
       if(name&&name.length<=200&&allowed.test(name))return name;
     }
     return "";
   };
   const seen=new Set(),results=[];
-  for(let i=0;i<nodes.length;i++){
-    const node=nodes[i],card=node.closest?.(".aZo")||node;
-    if(!card||seen.has(card)||card.isConnected===false)continue;
+  for(let index=0;index<nodes.length;index++){
+    const node=nodes[index],card=node.closest?.(".aZo")||node;
+    if(!card||card.isConnected===false||seen.has(card))continue;
     const name=filename(node,card);
     if(!name)continue;
     seen.add(card);
-    results.push({id:"visible:"+i,source:"gmail-visible",kind:"attachment",
-      name,subject,position:i});
+    results.push({id:"visible:"+index,source:"gmail-visible",kind:"attachment",name,subject,position:index});
   }
   return results;
 }
-export function downloadVisibleGmailAttachment(position,expectedName) {
+
+export async function downloadVisibleGmailAttachment(position,expectedName) {
+  // Chrome scripting serializes this function and calls it inside the Gmail page.
   const nodes=[...document.querySelectorAll(".aZo,[download_url],[data-attachment-id],[data-attachment-name]")];
   const node=nodes[position],card=node?.closest?.(".aZo")||node;
-  if(!card||card.isConnected===false)return {ok:false,error:"Attachment changed. Scan the open message again."};
+  if(!card||card.isConnected===false)return {ok:false,error:"The Gmail message changed. Scan again."};
   const decode=value=>{
     let v=String(value||"").trim();
-    for(let i=0;i<2&&/%[0-9a-f]{2}/i.test(v);i++){
-      try{v=decodeURIComponent(v);}catch{break;}
-    }
+    for(let i=0;i<2&&/%[0-9a-f]{2}/i.test(v);i++){try{v=decodeURIComponent(v);}catch{break;}}
     return v;
   };
-  const raw=card.getAttribute?.("download_url")||
+  const meta=card.getAttribute?.("download_url")||
     card.querySelector?.("[download_url]")?.getAttribute?.("download_url")||
     node.getAttribute?.("download_url")||"";
-  const parts=raw.split(":");
-  const candidates=[...parts.slice(1),
-    card.getAttribute?.("data-attachment-name"),
+  const parts=meta.split(":");
+  const names=[...parts.slice(1),card.getAttribute?.("data-attachment-name"),
     node.getAttribute?.("data-attachment-name"),
     card.querySelector?.(".aV3,.aQy")?.textContent,
     node.querySelector?.(".aV3,.aQy")?.textContent].map(decode);
-  if(!expectedName||!candidates.includes(expectedName)){
-    return {ok:false,error:"Attachment identity cannot be verified. Scan again before downloading."};
+  if(!expectedName||!names.includes(expectedName)){
+    return {ok:false,error:"The selected filename no longer matches Gmail. Scan again."};
   }
-  // Clicking Gmail's own Download button is best effort, not an API download.
-  const selectors=[
-    '[data-tooltip="Download"]','[aria-label="Download"]',
-    '[data-tooltip*="Download"]','[aria-label*="Download"]',
-    '.aQK'
-  ];
-  let button=null;
-  for(const selector of selectors){
-    button=card.querySelector?.(selector);
-    if(button)break;
+  const targets=[card,card.parentElement].filter(Boolean);
+  // Gmail shows its download overlay when a user hovers an attachment.
+  for(const target of targets){
+    try{
+      const events=["pointerover","mouseover","mouseenter"];
+      for(const name of events){
+        const ctor=name.startsWith("pointer")&&typeof PointerEvent==="function"?PointerEvent:MouseEvent;
+        target.dispatchEvent(new ctor(name,{bubbles:name!=="mouseenter",cancelable:true,view:window}));
+      }
+    }catch{}
   }
-  if(!button||button.disabled)return {ok:false,error:"No usable Gmail Download button is available for this attachment."};
-  button.click();
-  return {ok:true,triggered:true};
-}
+  await new Promise(resolve=>setTimeout(resolve,120));
 
-export function diagnoseVisibleGmailAttachments(){
-  // Intentionally returns counts only; never inspect or transmit email contents.
-  const count=selector=>document.querySelectorAll(selector).length;
-  return {
-    cards:count(".aZo"),
-    downloadDescriptors:count("[download_url]"),
-    namedNodes:count("[data-attachment-id],[data-attachment-name]"),
-    filenameLabels:count(".aV3,.aQy")
+  const isDownload=el=>{
+    if(el.disabled||el.getAttribute?.("aria-disabled")==="true")return false;
+    const value=["aria-label","data-tooltip","title","data-original-title"].map(k=>el.getAttribute?.(k)||"").join(" ").toLowerCase();
+    return /(download|изтегля|сваля|изтегли|свали|herunterladen|télécharger|descargar|scarica|скачать)/i.test(value);
   };
+  const matches=[];
+  for(const scope of targets){
+    const items=[...scope.querySelectorAll?.("button,[role='button'],[data-tooltip],[aria-label],a[href]")||[]];
+    for(const item of items)if(isDownload(item)&&!matches.includes(item))matches.push(item);
+    if(matches.length)break;
+  }
+  // Old Gmail attachment layouts sometimes use this download overlay class.
+  if(!matches.length){
+    const overlay=card.querySelector?.(".aQK");
+    if(overlay&&!overlay.disabled)matches.push(overlay);
+  }
+  if(!matches.length){
+    return {ok:false,error:"No Gmail Download control found for this attachment. Hover the attachment and click Gmail's download icon, or configure Gmail API."};
+  }
+  const button=matches[0];
+  try{
+    button.click();
+    // Clicked does not mean saved. The extension checks Chrome Downloads separately.
+    return {ok:true,triggered:true,control:button.getAttribute?.("aria-label")||button.getAttribute?.("data-tooltip")||"Gmail download control"};
+  }catch(error){
+    return {ok:false,error:"Gmail rejected the download control: "+error.message};
+  }
+}
+export function diagnoseVisibleGmailAttachments(){
+  const count=selector=>document.querySelectorAll(selector).length;
+  return {cards:count(".aZo"),downloadDescriptors:count("[download_url]"),
+    namedNodes:count("[data-attachment-id],[data-attachment-name]"),filenameLabels:count(".aV3,.aQy")};
 }
