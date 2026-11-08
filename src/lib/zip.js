@@ -9,7 +9,7 @@ export function crc32(data) {
  return (crc^0xffffffff)>>>0;
 }
 function safeName(name) {
- const cleaned=String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").slice(0,160);
+ const cleaned=String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").replace(/\.\./g,"_").slice(0,160);
  return cleaned||"file";
 }
 function dosTimeDate(date) {
