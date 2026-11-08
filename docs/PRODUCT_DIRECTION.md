@@ -21,3 +21,7 @@ Gmail attachment URLs are not ordinary link URLs. The extension **does not curre
 Sources: https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages.attachments/get and https://developers.google.com/workspace/gmail/api/auth/scopes
 
 **Do not promise Gmail attachment support until authorization and download are tested.**
+
+## Gmail implementation status
+
+The Gmail API attachment listing and local file/ZIP downloader are implemented in a dedicated full-page extension manager. Google OAuth setup, verification and real-account integration tests remain pending. Gmail access requires explicit Google consent and is not active with the placeholder OAuth client ID.
