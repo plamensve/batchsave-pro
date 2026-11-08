@@ -6,7 +6,7 @@ async function request(path,options={}){
  if(!res.ok)throw Error(payload.msg||payload.error_description||payload.message||payload.error||"Request failed");
  return payload;
 }
-export async function signUp(email,password){return request("/auth/v1/signup",{method:"POST",body:JSON.stringify({email,password})});}
+export async function signUp(email,password){return request("/auth/v1/signup?redirect_to="+encodeURIComponent("https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/checkout-return?result=email-confirmed"),{method:"POST",body:JSON.stringify({email,password})});}
 export async function signIn(email,password){
  const auth=await request("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
  auth.expires_at=Math.floor(Date.now()/1000)+(auth.expires_in||3600);await chrome.storage.local.set({batchsaveSession:auth});return auth;
