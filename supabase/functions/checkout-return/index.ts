@@ -1,8 +1,8 @@
 Deno.serve(req=>{
  if(req.method!=="GET")return new Response("Method not allowed",{status:405});
  const result=new URL(req.url).searchParams.get("result");
- const heading=result==="success"?"Subscription started":result==="cancel"?"Checkout canceled":"Billing settings";
- const copy=result==="success"?"Your subscription is being synchronized. Open BatchSave Pro in Chrome to refresh your access.":result==="cancel"?"No purchase was completed. Return to BatchSave Pro to try again.":"You can return to BatchSave Pro.";
+ const heading=result==="success"?"Subscription started":result==="cancel"?"Checkout canceled":result==="email-confirmed"?"Email confirmed":"BatchSave Pro account";
+ const copy=result==="success"?"Your subscription is being synchronized. Open BatchSave Pro in Chrome to refresh your access.":result==="cancel"?"No purchase was completed. Return to BatchSave Pro to try again.":result==="email-confirmed"?"Your email verification is complete. Return to the BatchSave Pro Chrome extension and sign in using your email and password.":"Return to the BatchSave Pro extension and sign in using your email and password.";
  const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BatchSave Pro</title><style>body{font:16px system-ui,sans-serif;background:#f6f8ff;color:#14213c;display:grid;min-height:95vh;place-items:center}.card{max-width:420px;padding:36px;border:1px solid #dce6fb;border-radius:18px;background:#fff;box-shadow:0 10px 40px #dae4f670}h1{color:#285ee5;font-size:26px}p{line-height:1.65;color:#566985}</style><div class="card"><h1>${heading}</h1><p>${copy}</p><p>You can close this tab.</p></div></html>`;
  return new Response(html,{headers:{"content-type":"text/html;charset=utf-8","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'","x-content-type-options":"nosniff","x-frame-options":"DENY","cache-control":"no-store"}});
 });
