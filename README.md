@@ -43,3 +43,9 @@ When Sign in reports invalid credentials, use **Reset password** and follow the 
 While viewing an open Gmail conversation, click **Scan this page** in the regular extension popup. BatchSave first looks for Gmail's visible attachment cards and shows their filenames **without Google OAuth**. Select files and click **Download files**; this triggers Gmail's own visible Download buttons. This is experimental because Gmail DOM classes and controls may change. It cannot scan the whole mailbox or build ZIPs from Gmail attachment data without the official Gmail API and Google OAuth. The full Gmail API mode continues to require setup in `docs/GMAIL_SETUP.md`.
 
 Status and errors are shown directly below the Scan button; the user should not need to scroll to the bottom. The extension does not bypass Google authentication, access controls or Gmail's disabled downloads.
+
+## Gmail quick test — v0.7.1
+
+Open a Gmail message with a visible attachment card and press **Scan this page**. The popup hides the old `has:attachment` field for current-message scanning, lists the attachment with a decoded filename, and keeps **Download selected** visible in the popup footer. One discovered attachment is selected automatically. Click the button to trigger Gmail's own download control. The UI reports that the native click was triggered, not that the file was necessarily saved; confirm the actual download in Chrome.
+
+A temporary owner tester license is available via Supabase entitlement, independent of Stripe billing. Gmail's page structure is not a stable public API: native-click scanning is best effort, while full reliable Gmail attachment retrieval still needs Google OAuth/Gmail API.
