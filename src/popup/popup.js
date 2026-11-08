@@ -8,6 +8,10 @@ const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail";
 function notice(msg){$("status").textContent=msg;}
+function authFeedback(msg,kind="info"){
+ const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
+}
+
 function message(msg){$("account-status").textContent=msg;}
 function typeOf(f){
  if(isEmail(f)){
@@ -95,30 +99,31 @@ $("auth-form").addEventListener("submit",async ev=>{
  ev.preventDefault();
  const button=$("login");button.disabled=true;
  try{
+  authFeedback("Checking your account…");
   await signIn($("email").value.trim(),$("password").value);
-  notice("Signed in successfully.");await refreshAccount();
+  authFeedback("Signed in successfully.","success");notice("Signed in successfully.");await refreshAccount();
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
-  notice(bad?"Wrong email or password. Use Reset password if needed.":e.message);
+  authFeedback(bad?"Supabase rejected these credentials. Check the email and password, or choose Reset password.":`Sign in failed: ${e.message}`,"error");
  }finally{button.disabled=false;}
 });
 $("register").addEventListener("click",async()=>{
  const email=$("email").value.trim(),password=$("password").value;
  if(!email||password.length<6){notice("Enter an email and password of at least 6 characters.");return;}
  $("register").disabled=true;
- try{await signUp(email,password);notice("Check your email, confirm the address, then Sign in.");}
- catch(e){notice("Registration failed: "+e.message);}finally{$("register").disabled=false;}
+ try{authFeedback("Creating account…");await signUp(email,password);authFeedback("Account created. Confirm your email and return to Sign in.","success");notice("Check your email, confirm the address, then Sign in.");}
+ catch(e){authFeedback("Registration failed: "+e.message,"error");}finally{$("register").disabled=false;}
 });
 $("reset-password").addEventListener("click",async()=>{
  const email=$("email").value.trim();
- if(!email){notice("Enter your email address to reset the password.");return;}
+ if(!email){authFeedback("Enter your email address in the field above, then click Reset password.","error");$("email").focus();return;}
  $("reset-password").disabled=true;
- try{await requestPasswordReset(email);notice("If the account exists, a password reset email will arrive shortly.");}
- catch(e){notice("Password reset failed: "+e.message);}
+ try{authFeedback("Requesting password reset email…");await requestPasswordReset(email);authFeedback("Password reset requested. Check your inbox and spam folder. The recovery link opens a page to set a new password.","success");notice("Password reset requested.");}
+ catch(e){authFeedback("Password reset request failed: "+e.message,"error");}
  finally{$("reset-password").disabled=false;}
 });
 $("logout").addEventListener("click",async()=>{
- await signOut();state.selected.clear();await refreshAccount();render();notice("Signed out.");
+ await signOut();state.selected.clear();authFeedback("");await refreshAccount();render();notice("Signed out.");
 });
 for(const [id,fn] of [["upgrade","create-checkout"],["manage","billing-portal"]]){
  $(id).addEventListener("click",async()=>{
