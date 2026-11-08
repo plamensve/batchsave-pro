@@ -1,3 +1,4 @@
+import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signIn,signOut,session,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
@@ -7,8 +8,8 @@ $("version").textContent="v"+chrome.runtime.getManifest().version;
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
-const isEmail=f=>f.source==="gmail";
-function notice(msg){$("status").textContent=msg;}
+const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
+function notice(msg){$("status").textContent=msg;$("scan-feedback").textContent=msg;}
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
  if(msg)box.scrollIntoView({block:"nearest",behavior:"instant"});
@@ -37,13 +38,13 @@ function filtered(){
 function updateCount(){
  $("selected").textContent=state.selected.size+" selected";
  $("download").disabled=!state.selected.size||!state.access||state.busy;
- $("download-zip").disabled=!state.selected.size||!state.access||state.busy;
+ $("download-zip").disabled=!state.selected.size||!state.access||state.busy||state.source==="gmail-visible";
 }
 function render(){
  const shown=filtered(),target=$("results");target.replaceChildren();
  if(!shown.length){
   const empty=document.createElement("div");empty.className="empty";
-  empty.textContent=state.source==="gmail"?"No attachments matched. Try a different Gmail search.":"No matching files or substantive images.";
+  empty.textContent=isEmail({source:state.source})?"No visible attachments found in the open message.":"No matching files or substantive images.";
   target.append(empty);
  }
  for(const f of shown){
@@ -58,10 +59,10 @@ function render(){
   const meta=document.createElement("span");meta.className="file-meta";
   const title=document.createElement("div");title.className="file-name";title.textContent=f.name;
   const desc=document.createElement("div");desc.className="file-sub";
-  desc.textContent=isEmail(f)?(f.subject||"(No subject)")+" · "+(f.size?Math.ceil(f.size/1024)+" KB":"Gmail"):(new URL(f.url).hostname+" · "+typeOf(f).toUpperCase());
+  desc.textContent=isEmail(f)?(f.subject||"(No subject)")+" · "+(f.source==="gmail-visible"?"Native Gmail download":f.size?Math.ceil(f.size/1024)+" KB":"Gmail"):(new URL(f.url).hostname+" · "+typeOf(f).toUpperCase());
   meta.append(title,desc);row.append(checkbox,symbol,meta);target.append(row);
  }
- $("count").textContent=shown.length+" shown · "+state.files.length+(state.source==="gmail"?" Gmail attachments":" page files");
+ $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
  $("select-all").disabled=shown.length===0;
  updateCount();
 }
@@ -135,9 +136,18 @@ for(const [id,fn] of [["upgrade","create-checkout"],["manage","billing-portal"]]
   catch(e){notice("Billing: "+e.message);}
  });
 }
-async function scanGmail(){
+async function scanGmail(tabId){
+ notice("Checking attachments in the open Gmail conversation…");
+ const [{result:visible}]=await chrome.scripting.executeScript({target:{tabId},func:scanVisibleGmailAttachments});
+ if(visible?.length){
+   showFiles(visible,"gmail-visible");
+   notice(visible.length+" attachment(s) found in the open email. Select files and use Download files. ZIP needs Google authorization.");
+   return;
+ }
+ // No visible Gmail attachment card recognized. Mailbox API can be used after OAuth is configured.
+
  if(!configuredForGmail()){
-  notice("Gmail needs a Google OAuth client ID. Complete the setup in Google Cloud; see Gmail setup link.");
+  notice("No downloadable Gmail attachment cards were found in this open email. For full mailbox scanning, configure Google OAuth. Gmail interface changes may require an updated detector.");
   $("gmail-setup").hidden=false;return;
  }
  notice("Connecting to Gmail…");
@@ -160,7 +170,7 @@ $("scan").addEventListener("click",async()=>{
   const gmail=tab.url?.startsWith("https://mail.google.com/");
   $("gmail-controls").hidden=!gmail;
   if(gmail){
-   await scanGmail();
+   await scanGmail(tab.id);
   }else{
    notice("Scanning the current page…");
    const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:collectFromPage});
@@ -198,7 +208,17 @@ $("download").addEventListener("click",async()=>{
  state.busy=true;updateCount();
  try{
   await mustHaveLicense();
-  if(state.source==="gmail"){
+  if(state.source==="gmail-visible"){
+   const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+   if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the original Gmail message first.");
+   let completed=0;
+   for(const f of files){
+     const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:downloadVisibleGmailAttachment,args:[f.position]});
+     if(!result?.ok)throw Error(result?.error||"Gmail download button unavailable");
+     completed++;
+   }
+   notice("Triggered "+completed+" Gmail download(s) via Gmail buttons. Check Chrome Downloads.");
+  }else if(state.source==="gmail"){
    let completed=0;
    for(const f of files){
     notice("Downloading Gmail attachment "+(completed+1)+"/"+files.length+"…");
@@ -218,6 +238,7 @@ $("download").addEventListener("click",async()=>{
 $("download-zip").addEventListener("click",async()=>{
  const files=selectedFiles();
  if(!files.length)return;
+ if(state.source==="gmail-visible"){notice("ZIP of Gmail attachments requires Google OAuth. Use Download files for this open message.");return;}
  if(files.length>150){notice("ZIP supports up to 150 files.");return;}
  if(state.source!=="gmail"){
   const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
