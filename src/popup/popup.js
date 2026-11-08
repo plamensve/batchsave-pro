@@ -1,7 +1,7 @@
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
-import {signUp,signIn,signOut,session,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
+import {signUp,signIn,signOut,session,accountUser,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
@@ -74,30 +74,48 @@ function showFiles(files,source){
  if(source==="gmail-visible"&&state.files.length===1)state.selected.add(fileKey(state.files[0]));
  $("search").disabled=false;$("type").disabled=false;$("type").value="relevant";render();
 }
+function displayProfile(user,plan){
+ const identity=user?.user_metadata?.full_name||user?.user_metadata?.name||user?.email?.split("@")[0]||"BatchSave account";
+ $("account-name").textContent=identity;
+ $("account-avatar").textContent=identity.trim().charAt(0).toUpperCase()||"B";
+ $("account-email").textContent=user?.email||"Email unavailable";
+ $("account-license").textContent=plan||"Subscription status unavailable";
+ $("account-details").hidden=false;
+}
 async function refreshAccount(){
- $("auth-form").hidden=true;$("billing-actions").hidden=true;
+ $("auth-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;
+ let s;
  try{
-  const s=await session();
-  if(!s){
-   state.access=false;
-   message("Sign in to manage downloads and your trial.");
-   $("auth-form").hidden=false;updateCount();return;
-  }
-  const entitlementInfo=await entitlement();
-  state.access=!!entitlementInfo?.access_granted;
-  const expires=entitlementInfo?.trial_ends_at?new Date(entitlementInfo.trial_ends_at).getTime():0;
+  s=await session();
+ }catch(e){
+  state.access=false;message("Connection issue. Your login is saved; refresh when online.");
+  updateCount();return;
+ }
+ if(!s){
+  state.access=false;message("Sign in to manage downloads and your trial.");
+  $("auth-form").hidden=false;updateCount();return;
+ }
+ const current=await accountUser().catch(()=>s.user||null);
+ try{
+  const info=await entitlement();
+  state.access=!!info?.access_granted;
+  const expires=info?.trial_ends_at?new Date(info.trial_ends_at).getTime():0;
   const remaining=expires-Date.now();
+  const license=info?.subscription_status==="tester"?"Internal tester license":
+    info?.subscription_status==="active"?"Pro subscription":
+    info?.subscription_status==="trialing"?"3-day trial":
+    info?.subscription_status||"No active subscription";
+  displayProfile(current,license);
   message(state.access
-   ?(entitlementInfo.subscription_status==="tester"?"Internal testing access active":remaining>0?"Trial active · "+Math.ceil(remaining/3600000)+" hours left":"Pro subscription active")
+   ?(info?.subscription_status==="tester"?"Internal testing access active":remaining>0?"Trial · "+Math.ceil(remaining/3600000)+" hours left":"Pro subscription active")
    :"Signed in · start your 3-day trial to download");
   $("billing-actions").hidden=false;
-  $("upgrade").hidden=state.access||["active","trialing"].includes(entitlementInfo?.subscription_status);
-  $("manage").hidden=!entitlementInfo?.subscription_status||entitlementInfo.subscription_status==="tester";
+  $("upgrade").hidden=state.access||["active","trialing"].includes(info?.subscription_status);
+  $("manage").hidden=!info?.subscription_status||info.subscription_status==="tester";
  }catch(e){
-  state.access=false;
-  message("Signed in, but license validation failed: "+e.message);
-  $("billing-actions").hidden=false;
-  $("manage").hidden=true;
+  state.access=false;displayProfile(current,"License check unavailable");
+  message("Signed in · license check failed: "+e.message);
+  $("billing-actions").hidden=false;$("upgrade").hidden=true;$("manage").hidden=true;
  }
  updateCount();
 }
@@ -221,14 +239,32 @@ $("download").addEventListener("click",async()=>{
   await mustHaveLicense();
   if(state.source==="gmail-visible"){
    const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
-   if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the original Gmail message first.");
-   let completed=0;
+   if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the original Gmail email again.");
+   let confirmed=0;
    for(const f of files){
-     const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:downloadVisibleGmailAttachment,args:[f.position,f.name]});
-     if(!result?.ok)throw Error(result?.error||"Gmail download button unavailable");
-     completed++;
+    notice("Requesting Gmail download: "+f.name);
+    const previous=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+    const known=new Set(previous.map(item=>item.id));
+    // Execute in the page's own JS world; Gmail may attach its handler there.
+    const [{result}]=await chrome.scripting.executeScript({
+      target:{tabId:tab.id},world:"MAIN",
+      func:downloadVisibleGmailAttachment,args:[f.position,f.name]
+    });
+    if(!result?.ok)throw Error((result?.error||"Gmail download control unavailable")+" ("+confirmed+" confirmed)");
+    let detected=null;
+    for(let n=0;n<7;n++){
+      await new Promise(resolve=>setTimeout(resolve,400));
+      const current=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+      detected=current.find(item=>!known.has(item.id))||null;
+      if(detected)break;
+    }
+    if(!detected){
+      throw Error("Gmail button was activated, but Chrome did not start a download for "+f.name+". Hover the attachment and use Gmail's Download icon. Google OAuth is needed for reliable direct downloads.");
+    }
+    confirmed++;
+    notice("Chrome started "+confirmed+"/"+files.length+" download(s).");
    }
-   notice("Activated Gmail Download for "+completed+" file(s). Check Chrome Downloads to confirm completion.");
+   notice("Chrome detected "+confirmed+" new download(s). Check Downloads for completion.");
   }else if(state.source==="gmail"){
    let completed=0;
    for(const f of files){
