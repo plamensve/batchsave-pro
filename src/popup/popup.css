@@ -22,3 +22,15 @@ footer .notice{padding:0 0 7px;font-size:11px;max-height:46px;overflow-y:auto}
 .gmail-controls{padding:8px 16px}
 .gmail-label{margin-bottom:0}
 .scan-feedback{padding:7px 10px;margin-bottom:8px}
+
+/* Main actions must stay visible even when Gmail results are long. */
+.toolbar{flex-shrink:0}
+.toolbar #download{background:#176c57;box-shadow:0 2px 7px #176c5725}
+.toolbar #download:not(:disabled):hover{background:#125940}
+.toolbar button{min-width:0;flex:1}
+.summary{align-items:center;gap:6px}
+.summary #count{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary #selected{flex-shrink:0}
+.mini-select{padding:4px 7px;font-size:10px;border:1px solid #d5e0f2;border-radius:5px;background:white;color:#486189;flex-shrink:0}
+footer .download-actions{width:100%}
+footer .download-actions button{width:100%}
