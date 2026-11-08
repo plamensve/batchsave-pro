@@ -11,3 +11,14 @@
 .auth-panel{position:relative}.auth-feedback{max-height:110px;overflow:auto;font-size:12px}.version{min-width:45px;text-align:center}
 
 .scan-feedback{margin:0 16px 10px;padding:9px 11px;border:1px solid #c7d9f3;border-radius:8px;color:#2b527d;background:#eaf3ff;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+
+/* A fixed-height extension viewport keeps Download always visible. */
+html,body{height:560px;max-height:560px;overflow:hidden}
+.app{height:100%;min-height:0;max-height:560px}
+.results{min-height:80px;max-height:none;flex:1;overflow-y:auto;margin-bottom:8px}
+footer{position:relative;flex:0 0 auto;z-index:2;padding:8px 16px 12px;background:#f6f8fc;border-top:1px solid #dfe7f4;box-shadow:0 -4px 10px #1a3d7310}
+footer .notice{padding:0 0 7px;font-size:11px;max-height:46px;overflow-y:auto}
+.download-actions .download:only-child{width:100%}
+.gmail-controls{padding:8px 16px}
+.gmail-label{margin-bottom:0}
+.scan-feedback{padding:7px 10px;margin-bottom:8px}
