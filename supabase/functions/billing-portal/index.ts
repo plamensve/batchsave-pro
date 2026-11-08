@@ -14,7 +14,7 @@ Deno.serve(async(req)=>{
  if(!p?.stripe_customer_id)return json({error:"No subscription customer found"},404);
  try{
   const stripe=new Stripe(key);
-  const session=await stripe.billingPortal.sessions.create({customer:p.stripe_customer_id,return_url:url+"/functions/v1/create-checkout?result=return"});
+  const session=await stripe.billingPortal.sessions.create({customer:p.stripe_customer_id,return_url:url+"/functions/v1/checkout-return?result=return"});
   return json({url:session.url});
  }catch(e){console.error("Stripe portal failed",e);return json({error:"Billing portal unavailable"},502);}
 });
