@@ -59,3 +59,15 @@ The main popup now keeps **Download selected** next to **Scan this page**, so it
 Gmail attachment discovery is based on the visible Gmail page, which is not a stable Google API. If the scanner cannot identify attachments, it reports only counts of attachment DOM markers (no email content) so regressions can be diagnosed. Reliable mailbox-wide Gmail exports require Google OAuth + Gmail API; the OAuth ID is still a placeholder and **must be configured** before a production release.
 
 Supabase auth access tokens rotate. A cross-context Web Lock coordinates token refresh between popup and extension service worker when Web Locks are available, and temporary network failures no longer delete the stored session. Changing the extension ID still cannot preserve another extension's local storage.
+
+## Larger popup and grouped downloads — v0.8.0
+
+The popup has a wider 490px layout and uses Chrome's available 600px popup height. The scanned-file list expands to occupy the remaining space while account details and the current plan remain visible above it.
+
+**Download files** sends all selected downloads from one click into the same timestamped subfolder under the user's default Downloads directory, e.g. `Downloads/BatchSave Pro/2026-11-09_08-04-05/`. Existing files are never overwritten; Chrome automatically uniquifies matching names. Chrome may still prompt if the user's browser is configured to ask where each file goes.
+
+For direct page downloads, the service worker passes the relative path to `chrome.downloads.download`. The Gmail API path also passes the batch folder. For Gmail's **visible attachment fallback**, the service worker temporarily suggests the same relative folder via `chrome.downloads.onDeterminingFilename`, but only for the expected filename from an eligible Gmail-related host and within a short-lived request. Other browser downloads remain unaffected. If Chrome or another extension prevents renaming, the popup reports that folder grouping could not be confirmed; Gmail's DOM-driven downloads remain experimental until Google OAuth is configured.
+
+The account panel shows **Signed in**, the authenticated email address and **Current plan**, taken from Supabase Auth and the current subscription entitlement.
+
+Chrome's extension popup cannot be taller than approximately 600px; large batches scroll inside the file list.
