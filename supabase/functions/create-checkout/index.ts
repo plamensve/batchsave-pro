@@ -23,6 +23,7 @@ Deno.serve(async(req)=>{
     const checkoutBase=base+"/functions/v1/checkout-return";
     const session=await stripe.checkout.sessions.create({
       mode:"subscription",
+      payment_method_collection:"always",
       line_items:[{price,quantity:1}],
       customer:profile.stripe_customer_id||undefined,
       customer_email:profile.stripe_customer_id?undefined:user.email,
