@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.billing-portal]
 verify_jwt = true
+
+[functions.checkout-return]
+verify_jwt = false
