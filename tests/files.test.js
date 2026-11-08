@@ -34,7 +34,7 @@ test("injected scanner detects img, lazy images, direct links and CSS background
      {getAttribute:k=>k==="href"?"https://example.com/download/not-a-file":null},
      {getAttribute:k=>k==="href"?"javascript:alert(1)":null}
    ];
-   return [{getAttribute:()=> "background-image: url('../bg.jpg')"}];
+   return [{getAttribute:()=> "background-image: url('../bg.jpg')",clientWidth:600,clientHeight:400}];
   }
  };
  try{
