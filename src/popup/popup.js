@@ -3,6 +3,7 @@ import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,is
 import {signUp,signIn,signOut,session,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
+$("version").textContent="v"+chrome.runtime.getManifest().version;
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
@@ -10,6 +11,7 @@ const isEmail=f=>f.source==="gmail";
 function notice(msg){$("status").textContent=msg;}
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
+ if(msg)box.scrollIntoView({block:"nearest",behavior:"instant"});
 }
 
 function message(msg){$("account-status").textContent=msg;}
@@ -100,7 +102,9 @@ $("auth-form").addEventListener("submit",async ev=>{
  const button=$("login");button.disabled=true;
  try{
   authFeedback("Checking your account…");
-  await signIn($("email").value.trim(),$("password").value);
+  const email=$("email").value.trim();
+  await chrome.storage.local.set({batchsaveLastEmail:email});
+  await signIn(email,$("password").value);
   authFeedback("Signed in successfully.","success");notice("Signed in successfully.");await refreshAccount();
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
@@ -116,9 +120,9 @@ $("register").addEventListener("click",async()=>{
 });
 $("reset-password").addEventListener("click",async()=>{
  const email=$("email").value.trim();
- if(!email){authFeedback("Enter your email address in the field above, then click Reset password.","error");$("email").focus();return;}
+ if(!email){authFeedback("Enter the email address used to create your BatchSave account, then choose Send reset email.","error");$("email").focus();return;}
  $("reset-password").disabled=true;
- try{authFeedback("Requesting password reset email…");await requestPasswordReset(email);authFeedback("Password reset requested. Check your inbox and spam folder. The recovery link opens a page to set a new password.","success");notice("Password reset requested.");}
+ try{authFeedback("Requesting password reset email…");await chrome.storage.local.set({batchsaveLastEmail:email});await requestPasswordReset(email);authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the newest password reset email, choose a new password, then sign in.","success");notice("Password reset request accepted.");}
  catch(e){authFeedback("Password reset request failed: "+e.message,"error");}
  finally{$("reset-password").disabled=false;}
 });
@@ -250,3 +254,5 @@ async function detectGmail(){
  }catch{}
 }
 refreshAccount();detectGmail();
+
+chrome.storage.local.get("batchsaveLastEmail").then(({batchsaveLastEmail})=>{if(!$("email").value&&batchsaveLastEmail)$("email").value=batchsaveLastEmail;}).catch(()=>{});
