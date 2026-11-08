@@ -19,3 +19,7 @@ This is a developer build, **not ready for Chrome Web Store publication**. Strip
 Run local tests: `npm test`.
 
 See [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## ZIP downloads
+
+Select files and choose **Download ZIP**. The browser requests access to the selected download origins. ZIP creation is local, limited to 150 items / 100 MB, and requires the Chrome popup to remain open while fetching. Some sources block cross-site fetching, are behind authentication, or redirect to unsupported URLs; use individual downloads in those cases. ZIP uses the STORE method (no further compression).
