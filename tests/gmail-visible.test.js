@@ -31,7 +31,7 @@ test("invalid Gmail selection fails safely",async()=>{
 
 test("Gmail percent-encoded filename appears decoded and uses the matching card",async()=>{
  const saved=globalThis.document;let clicked=0;
- const download={click(){clicked++;}};
+ const download={click(){clicked++;},getAttribute:key=>key==="aria-label"?"Download":null};
  const card={
   isConnected:true,contains:()=>false,closest(){return this},
   getAttribute:key=>key==="download_url"?"application/pdf:%D0%A4%D0%B0%D0%BA%D1%82%D1%83%D1%80%D0%B0.pdf:attachment-id":null,
