@@ -37,3 +37,9 @@ Chrome popup → **Open Gmail attachments** opens the full-page Gmail attachment
 Open Gmail, open the regular BatchSave popup, then select **Scan this page**. The extension uses the official Gmail API to list real email attachments (the first 35 matching messages, default search `has:attachment`). Select files and choose **Download files** or **Download ZIP**. It does not automatically isolate the single Gmail message currently open. To activate the feature, configure the real Chrome Extension Google OAuth client ID in `manifest.json` as documented in [Gmail Setup](docs/GMAIL_SETUP.md). Until OAuth is configured, the popup displays a setup link.
 
 When Sign in reports invalid credentials, use **Reset password** and follow the recovery email. The `account-recovery` redirect must be allowlisted in Supabase Auth. See [Auth Setup](docs/AUTH_SETUP.md).
+
+## Gmail: scan current open message (prototype 0.7.0)
+
+While viewing an open Gmail conversation, click **Scan this page** in the regular extension popup. BatchSave first looks for Gmail's visible attachment cards and shows their filenames **without Google OAuth**. Select files and click **Download files**; this triggers Gmail's own visible Download buttons. This is experimental because Gmail DOM classes and controls may change. It cannot scan the whole mailbox or build ZIPs from Gmail attachment data without the official Gmail API and Google OAuth. The full Gmail API mode continues to require setup in `docs/GMAIL_SETUP.md`.
+
+Status and errors are shown directly below the Scan button; the user should not need to scroll to the bottom. The extension does not bypass Google authentication, access controls or Gmail's disabled downloads.
