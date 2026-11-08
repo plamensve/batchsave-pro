@@ -48,3 +48,35 @@ test("session is removed on signout",async()=>{
   await signOut();assert.equal(await session(),null);
  });
 });
+
+test("expired token refreshes only once during concurrent requests",async()=>{
+ let called=0;
+ await withMock(async(url)=>{
+  assert.match(url,/grant_type=refresh_token/);
+  called++;
+  await Promise.resolve();
+  return new Response(JSON.stringify({access_token:"new-access",refresh_token:"new-refresh",expires_in:3600}),{status:200});
+ },async storage=>{
+  storage.set("batchsaveSession",{access_token:"expired",refresh_token:"old-refresh",expires_at:1});
+  const [first,second,third]=await Promise.all([session(),session(),session()]);
+  assert.equal(called,1);
+  assert.equal(first.access_token,"new-access");
+  assert.equal(second.access_token,"new-access");
+  assert.equal(third.access_token,"new-access");
+  assert.equal(storage.get("batchsaveSession").refresh_token,"new-refresh");
+ });
+});
+test("temporary auth server failure does not log out user",async()=>{
+ await withMock(async()=>new Response(JSON.stringify({error:"server_error",message:"Temporary failure"}),{status:503}),async storage=>{
+  storage.set("batchsaveSession",{access_token:"expired",refresh_token:"old-refresh",expires_at:1});
+  await assert.rejects(session(),/Temporary failure/);
+  assert.equal(storage.get("batchsaveSession").refresh_token,"old-refresh");
+ });
+});
+test("revoked refresh token clears expired session",async()=>{
+ await withMock(async()=>new Response(JSON.stringify({error:"invalid_grant",message:"Invalid refresh token"}),{status:400}),async storage=>{
+  storage.set("batchsaveSession",{access_token:"expired",refresh_token:"bad-refresh",expires_at:1});
+  assert.equal(await session(),null);
+  assert.equal(storage.has("batchsaveSession"),false);
+ });
+});
