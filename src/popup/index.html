@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BatchSave Pro</title><link rel="stylesheet" href="./popup.css"></head>
+<body>
+<main class="app">
+<header class="header"><div class="brand"><span class="mark">B</span><div><h1>BatchSave <strong>Pro</strong></h1><p>Bulk file downloader</p></div></div><span class="version">BETA</span></header>
+<section class="toolbar"><button id="scan" class="primary">Scan this page</button><button id="select-all" class="secondary" disabled>Select all</button></section>
+<section class="controls"><label class="search-label"><span class="sr-only">Filter filename</span><input id="search" type="search" placeholder="Search filenames or URLs" disabled></label><select id="type" aria-label="Filter type" disabled><option value="all">All files</option><option value="image">Images</option><option value="pdf">PDF</option><option value="other">Other files</option></select></section>
+<div class="summary"><span id="count">No files scanned</span><span id="selected">0 selected</span></div>
+<section id="results" class="results" aria-live="polite"><div class="empty">Open a page and click <strong>Scan this page</strong>.</div></section>
+<footer><div class="notice" id="status" role="status">Files are processed locally in your browser.</div><button id="download" class="primary download" disabled>Download selected</button></footer>
+</main><script type="module" src="./popup.js"></script></body></html>
