@@ -30,9 +30,9 @@ test("injected scanner detects img, lazy images, direct links and CSS background
   ],
   querySelectorAll:(selector)=>{
    if(selector==="a[href]")return [
-     {getAttribute:()=> "./reports/statement.pdf"},
-     {getAttribute:()=> "https://example.com/download/not-a-file"},
-     {getAttribute:()=> "javascript:alert(1)"}
+     {getAttribute:k=>k==="href"?"./reports/statement.pdf":null},
+     {getAttribute:k=>k==="href"?"https://example.com/download/not-a-file":null},
+     {getAttribute:k=>k==="href"?"javascript:alert(1)":null}
    ];
    return [{getAttribute:()=> "background-image: url('../bg.jpg')"}];
   }
