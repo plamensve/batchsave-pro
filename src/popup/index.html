@@ -14,10 +14,11 @@
 </section>
 <section class="toolbar"><button id="scan" class="primary" type="button">Scan this page</button><button id="select-all" class="secondary" type="button" disabled>Select all</button></section>
 <section id="gmail-controls" class="gmail-controls" hidden>
- <div class="gmail-label"><strong>Gmail attachments</strong><span>Google read-only access</span></div>
- <input id="gmail-query" value="has:attachment" placeholder="Gmail search query" aria-label="Gmail search">
+ <div class="gmail-label"><strong>Gmail attachments</strong><span>Current email: no OAuth needed</span></div>
+ <input id="gmail-query" value="has:attachment" title="Mailbox-wide Gmail API search (requires Google OAuth)" placeholder="Gmail search query" aria-label="Gmail search">
  <a id="gmail-setup" hidden href="https://github.com/plamensve/batchsave-pro/blob/main/docs/GMAIL_SETUP.md" target="_blank" rel="noreferrer">Configure Google OAuth to enable Gmail scanning</a>
 </section>
+<div id="scan-feedback" class="scan-feedback" role="status" aria-live="polite">Open a message in Gmail, then press Scan this page.</div>
 <section class="controls"><label class="search-label"><span class="sr-only">Search filenames</span><input id="search" type="search" placeholder="Search filenames" disabled></label><select id="type" aria-label="Filter" disabled><option value="relevant">Relevant files</option><option value="attachment">Attachments</option><option value="image">Photos</option><option value="pdf">PDF</option><option value="other">Other</option><option value="all">All resources</option></select></section>
 <div class="summary"><span id="count">No files scanned</span><span id="selected">0 selected</span></div>
 <section id="results" class="results" aria-live="polite"><div class="empty">Open a page or Gmail and click Scan this page.</div></section>
