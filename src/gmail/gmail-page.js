@@ -5,6 +5,10 @@ import {configuredForGmail,gmailToken,disconnectGmail,listGmailAttachments,readG
 const $=id=>document.getElementById(id);
 const state={files:[],selected:new Set(),connected:false,licensed:false,nextPage:"",query:"",busy:false};
 const LIMIT=100*1024*1024;
+$("copy-id").addEventListener("click",async()=>{
+ try{await navigator.clipboard.writeText(chrome.runtime.id);googleStatus("Extension ID copied. Use this as Item ID when creating a Chrome Extension OAuth client.");}
+ catch{googleStatus("Extension ID: "+chrome.runtime.id);}
+});
 function status(message){$("status").textContent=message;}
 function googleStatus(message){$("google-status").textContent=message;}
 function fileType(f){
