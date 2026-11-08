@@ -1,10 +1,11 @@
+import {makeZip} from "../lib/zip.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage} from "../lib/files.js";
 import {signUp,signIn,signOut,session,entitlement,billingFunction} from "../services/auth.js";
 const $=id=>document.getElementById(id);
 const state={files:[],selected:new Set(),access:false};
 function notice(text){$("status").textContent=text;}
 function filtered(){const search=$("search").value.toLowerCase().trim(),type=$("type").value;return state.files.filter(f=>(type==="all"||f.kind===type)&&(!search||f.name.toLowerCase().includes(search)||f.url.toLowerCase().includes(search)));}
-function updateCount(){$("selected").textContent=state.selected.size+" selected";$("download").disabled=!state.selected.size||!state.access;}
+function updateCount(){$("selected").textContent=state.selected.size+" selected";$("download").disabled=!state.selected.size||!state.access;$("download-zip").disabled=!state.selected.size||!state.access;}
 function render(){
  const shown=filtered(),container=$("results");container.replaceChildren();
  if(!shown.length){const el=document.createElement("div");el.className="empty";el.textContent=state.files.length?"No matching files.":"No downloadable links or images found.";container.append(el);}
@@ -70,3 +71,39 @@ $("download").addEventListener("click",async()=>{
  catch(e){notice("Download failed: "+e.message);await refreshAccount();}finally{updateCount();}
 });
 refreshAccount();
+
+$("download-zip").addEventListener("click",async()=>{
+ if(!state.access){notice("Start your trial or subscribe to download.");return;}
+ const chosen=state.files.filter(f=>state.selected.has(f.url));
+ if(chosen.length>150){notice("ZIP supports at most 150 selected files.");return;}
+ // Chrome requires this permission prompt within a direct user gesture.
+ const origins=[...new Set(chosen.map(f=>new URL(f.url).origin+"/*"))];
+ let granted=false;
+ try{granted=await chrome.permissions.request({origins});}
+ catch(e){notice("Site permission request failed: "+e.message);return;}
+ if(!granted){notice("Site access is required for ZIP downloads.");return;}
+ const button=$("download-zip");button.disabled=true;notice("Building ZIP in your browser…");
+ try{
+   const access=await entitlement();
+   if(!access?.access_granted)throw Error("Trial ended or no active subscription.");
+   const entries=[];let total=0;
+   for(let i=0;i<chosen.length;i++){
+     const f=chosen[i];notice(`Fetching ${i+1}/${chosen.length}: ${f.name}`);
+     const response=await fetch(f.url,{credentials:"include",redirect:"follow"});
+     if(!response.ok)throw Error(`HTTP ${response.status} for ${f.name}`);
+     const size=Number(response.headers.get("content-length")||0);
+     if(size&&total+size>100*1024*1024)throw Error("100 MB ZIP limit reached.");
+     const data=new Uint8Array(await response.arrayBuffer());
+     total+=data.byteLength;
+     if(total>100*1024*1024)throw Error("100 MB ZIP limit reached.");
+     entries.push({name:f.name,bytes:data});
+   }
+   const blob=makeZip(entries);
+   const url=URL.createObjectURL(blob);
+   try{
+     await chrome.downloads.download({url,filename:"BatchSave/batchsave-"+new Date().toISOString().slice(0,10)+".zip",saveAs:true,conflictAction:"uniquify"});
+     notice(`ZIP download started with ${entries.length} files.`);
+   }finally{setTimeout(()=>URL.revokeObjectURL(url),60000);}
+ }catch(e){notice("ZIP failed: "+e.message+" Try downloading files individually.");}
+ finally{button.disabled=false;updateCount();}
+});
