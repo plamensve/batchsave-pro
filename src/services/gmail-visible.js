@@ -1,57 +1,67 @@
-// Runs inside the currently open Gmail tab via chrome.scripting.executeScript.
-// Only reports visible attachment metadata. It cannot read mailbox data or bypass Gmail.
+// Gmail's visible attachment UI, accessed only on the open Gmail tab.
+// This is an optional best-effort path; full mailbox access uses the official API.
 export function scanVisibleGmailAttachments(){
- const subject=document.querySelector("h2.hP")?.textContent?.trim()||"Current Gmail conversation";
+ const subject=document.querySelector("h2.hP")?.textContent?.trim()||"Open Gmail message";
  const selectors=".aZo, [download_url], [data-attachment-id], [data-attachment-name]";
- const candidates=[...document.querySelectorAll(selectors)];
- const cards=[];
- const filePattern=/[\wÀ-ÿА-Яа-я][^\/\\<>:"|?*\r\n]{0,180}\.(?:pdf|docx?|xlsx?|pptx?|csv|txt|zip|rar|7z|jpe?g|png|gif|webp|heic|bmp|xml|json|eml|msg|mp3|mp4)$/i;
- function nameOf(el){
-   const metadata=el.getAttribute("download_url")||"";
-   const chunks=metadata.split(":");
-   const downloadName=chunks.length>=3?chunks[1]:"";
-   const values=[el.getAttribute("data-attachment-name"),downloadName,
-     el.querySelector(".aV3, .aQy, [data-tooltip]")?.textContent,
-     el.getAttribute("aria-label"),el.getAttribute("title")];
-   for(const val of values){
-     if(!val)continue;
-     const str=val.trim();
-     if(filePattern.test(str))return str.slice(0,180);
-   }
-   return "";
+ const nodes=[...document.querySelectorAll(selectors)],seen=new Set(),results=[];
+ const extension=/\.(?:pdf|docx?|xlsx?|pptx?|csv|txt|zip|rar|7z|jpe?g|png|gif|webp|heic|bmp|xml|json|eml|msg|mp3|mp4)$/i;
+ const clean=(s)=>{
+  if(typeof s!=="string")return "";
+  let text=s.trim();
+  try{text=decodeURIComponent(text);}catch{}
+  return text;
+ };
+ const nameOf=el=>{
+  const raw=el.getAttribute?.("download_url")||"";
+  const fromDownload=raw.match(/^[^:]+:(.+):[^:]+$/)?.[1]||"";
+  const candidates=[
+   el.getAttribute?.("data-attachment-name"),
+   fromDownload,
+   el.querySelector?.(".aV3,.aQy")?.textContent,
+   el.getAttribute?.("title"),
+   el.getAttribute?.("aria-label")
+  ];
+  for(const rawName of candidates){
+   const value=clean(rawName);
+   if(value&&extension.test(value))return value.slice(0,180);
+  }
+  return "";
+ };
+ for(let i=0;i<nodes.length;i++){
+  const node=nodes[i],card=node.closest?.(".aZo")||node;
+  if(!card?.isConnected||seen.has(card))continue;
+  const name=nameOf(card)||nameOf(node);
+  if(!name)continue;
+  seen.add(card);
+  results.push({id:"visible:"+i,source:"gmail-visible",kind:"attachment",name,subject,
+    position:i,hasNativeDownload:true});
  }
- for(const el of candidates){
-   if(cards.some(card=>card.contains(el)))continue;
-   const container=el.closest(".aZo")||el;
-   if(!container.isConnected)continue;
-   const name=nameOf(el)||nameOf(container);
-   if(!name)continue;
-   if(cards.some(card=>card===container))continue;
-   cards.push(container);
- }
- return cards.map((el,index)=>{
-   const name=nameOf(el)||"attachment";
-   return {id:"visible:"+index,source:"gmail-visible",kind:"attachment",
-     name,subject,position:index,hasNativeDownload:Boolean(el.querySelector('[aria-label*="Download"],[data-tooltip*="Download"],.aQK'))};
- });
+ return results;
 }
-// Called separately for each selected file. Resolves the card again to avoid stale nodes.
-export function downloadVisibleGmailAttachment(position){
+export function downloadVisibleGmailAttachment(position,expectedName){
  const nodes=[...document.querySelectorAll(".aZo, [download_url], [data-attachment-id], [data-attachment-name]")];
- const cards=[];
- for(const el of nodes){
-  if(cards.some(card=>card.contains(el)))continue;
-  const card=el.closest(".aZo")||el;
-  if(!card.isConnected||cards.includes(card))continue;
-  const value=card.getAttribute("download_url")||el.getAttribute("download_url")||"";
-  const text=[value,card.querySelector(".aV3,.aQy")?.textContent,card.getAttribute("data-attachment-name")].filter(Boolean).join(" ");
-  if(!/\.(?:pdf|docx?|xlsx?|pptx?|csv|txt|zip|rar|7z|jpe?g|png|gif|webp|heic|bmp|xml|json|eml|msg|mp3|mp4)(?:\s|:|$)/i.test(text))continue;
-  cards.push(card);
+ const node=nodes[position],card=node?.closest?.(".aZo")||node;
+ if(!card||!card.isConnected)return {ok:false,error:"The email changed. Scan it again."};
+ const raw=(card.getAttribute?.("download_url")||node.getAttribute?.("download_url")||"");
+ let meta=raw+" "+(card.querySelector?.(".aV3,.aQy")?.textContent||"");
+ try{meta=decodeURIComponent(meta);}catch{}
+ if(expectedName && !meta.includes(expectedName)){
+   const current=card.getAttribute?.("data-attachment-name")||"";
+   if(current!==expectedName)return {ok:false,error:"The selected attachment changed. Scan again."};
  }
- const card=cards[position];
- if(!card)return {ok:false,error:"Attachment has moved. Scan the message again."};
- const button=card.querySelector('[data-tooltip="Download"],[aria-label="Download"],[data-tooltip*="Download"],[aria-label*="Download"],.aQK');
- if(!button)return {ok:false,error:"Gmail did not expose a native Download button for this attachment."};
+ const selectors=[
+  '[data-tooltip="Download"]',
+  '[aria-label="Download"]',
+  '[data-tooltip*="Download"]',
+  '[aria-label*="Download"]',
+  '.aQK'
+ ];
+ let button=null;
+ for(const selector of selectors){
+  button=card.querySelector?.(selector);
+  if(button)break;
+ }
+ if(!button)return {ok:false,error:"Gmail has no accessible Download button on this attachment. Open the message and use Gmail's Download control."};
  button.click();
- return {ok:true};
+ return {ok:true,triggered:true};
 }
