@@ -1,9 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BatchSave Pro</title><link rel="stylesheet" href="./popup.css"></head>
-<body>
-<main class="app">
+<body><main class="app">
 <header class="header"><div class="brand"><span class="mark">B</span><div><h1>BatchSave <strong>Pro</strong></h1><p>Bulk file downloader</p></div></div><span class="version">BETA</span></header>
+<section class="auth-panel" aria-label="Account and billing">
+ <div id="account-status">Checking account…</div>
+ <form id="auth-form" hidden><input id="email" type="email" placeholder="Email address" autocomplete="email" required><input id="password" type="password" placeholder="Password (min. 6 characters)" autocomplete="current-password" minlength="6" required><div class="auth-actions"><button class="secondary" type="submit" id="login">Sign in</button><button class="secondary" type="button" id="register">Create account</button></div></form>
+ <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Subscribe — €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Manage billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
+</section>
 <section class="toolbar"><button id="scan" class="primary">Scan this page</button><button id="select-all" class="secondary" disabled>Select all</button></section>
 <section class="controls"><label class="search-label"><span class="sr-only">Filter filename</span><input id="search" type="search" placeholder="Search filenames or URLs" disabled></label><select id="type" aria-label="Filter type" disabled><option value="all">All files</option><option value="image">Images</option><option value="pdf">PDF</option><option value="other">Other files</option></select></section>
 <div class="summary"><span id="count">No files scanned</span><span id="selected">0 selected</span></div>

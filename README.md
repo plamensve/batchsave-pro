@@ -1,15 +1,21 @@
 # BatchSave Pro
 
-A Manifest V3 Chrome extension for selecting and downloading page images and linked files in batches.
+A Chrome Manifest V3 extension for discovering and downloading linked files and images.
 
-## Development
+## Run locally
 
-This repository is under active development. The first milestone focuses on local file discovery, selection, filters and browser downloads. Authentication and Stripe billing will be enabled once the dedicated Supabase project and secrets are provisioned.
+1. Open `chrome://extensions`.
+2. Enable Developer mode.
+3. Choose **Load unpacked** and select the repository folder.
+4. Sign in / register and verify email before using the 72-hour free trial.
+5. Visit a standard website and scan for files.
 
-## Business model
+## Subscription
 
-- Three-day free trial (72 hours)
-- €9.90/month recurring Stripe subscription after trial
-- Promotion codes supported by Stripe Checkout
+Price: **€9.90 per month**; 72-hour trial begins on initial account creation, independent of billing setup. The Stripe integration will be configured through protected Supabase Edge Functions. Browser-only keys are publishable, never secret.
 
-**Security:** Never commit Stripe secret keys, Supabase secret/service-role keys, or webhook signing secrets. Checkout sessions and entitlements must be verified server-side.
+This is a developer build, **not ready for Chrome Web Store publication**. Stripe secret values have not been provisioned, and actual payments will remain unavailable until configured and tested.
+
+Run local tests: `npm test`.
+
+See [docs/ROADMAP.md](docs/ROADMAP.md).

@@ -1,7 +1,10 @@
-// Chrome handles the final download; URLs are never sent to a third-party service.
+import {entitlement} from "../services/auth.js";
 chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
  if(message?.type!=="BATCH_DOWNLOAD")return false;
  (async()=>{
+  // Fail closed: no premium operation without fresh server-confirmed entitlement.
+  const access=await entitlement();
+  if(!access?.access_granted)return {ok:false,error:"Trial expired or no active subscription. Sign in or upgrade."};
   const items=Array.isArray(message.items)?message.items.slice(0,3000):[];
   if(!items.length)return {ok:false,error:"No files selected"};
   let started=0,failed=0;
