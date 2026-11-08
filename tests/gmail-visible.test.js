@@ -20,7 +20,7 @@ test("visible Gmail attachment detection and native download click",()=>{
  try{
    const files=scanVisibleGmailAttachments();
    assert.equal(files.length,1);assert.equal(files[0].name,"invoice_2026.pdf");assert.equal(files[0].position,0);
-   const response=downloadVisibleGmailAttachment(0);
+   const response=downloadVisibleGmailAttachment(0,"invoice_2026.pdf");
    assert.equal(response.ok,true);assert.equal(x.clicks(),1);
  }finally{x.restore();}
 });
@@ -44,4 +44,29 @@ test("Gmail percent-encoded filename appears decoded and uses the matching card"
    assert.equal(downloadVisibleGmailAttachment(files[0].position,files[0].name).ok,true);
    assert.equal(clicked,1);
  }finally{globalThis.document=saved;}
+});
+
+test("regression: Gmail download_url with multiple colon-delimited metadata segments",()=>{
+ const old=globalThis.document;
+ let clicked=0;
+ const button={disabled:false,click(){clicked++;}};
+ const card={
+  isConnected:true,closest(){return this;},
+  getAttribute:key=>key==="download_url"?
+   "application/pdf:%D0%A4%D0%B0%D0%BA%D1%82%D1%83%D1%80%D0%B0.pdf:opaqueId:other:fields":null,
+  querySelector:selector=>selector.includes("Download")?button:null
+ };
+ globalThis.document={querySelector:()=>({textContent:"Invoice"}),querySelectorAll:()=>[card]};
+ try{
+  const files=scanVisibleGmailAttachments();
+  assert.equal(files.length,1);
+  assert.equal(files[0].name,"Фактура.pdf");
+  assert.equal(downloadVisibleGmailAttachment(files[0].position,"Фактура.pdf").ok,true);
+  assert.equal(clicked,1);
+  assert.equal(downloadVisibleGmailAttachment(files[0].position,"other.pdf").ok,false);
+ }finally{globalThis.document=old;}
+});
+test("injected functions are self-contained without module variables",()=>{
+ assert.doesNotThrow(()=>new Function("return ("+scanVisibleGmailAttachments.toString()+")"));
+ assert.doesNotThrow(()=>new Function("return ("+downloadVisibleGmailAttachment.toString()+")"));
 });
