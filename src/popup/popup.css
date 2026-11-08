@@ -7,3 +7,5 @@
 .auth-feedback[data-kind="error"]{border-color:#efb4b4;background:#fff3f3;color:#9b2424}
 .auth-feedback[data-kind="success"]{border-color:#a4dac0;background:#f0fff6;color:#17623e}
 .auth-panel input:focus-visible,.auth-panel button:focus-visible{outline:2px solid #306ce6;outline-offset:2px}
+
+.auth-panel{position:relative}.auth-feedback{max-height:110px;overflow:auto;font-size:12px}.version{min-width:45px;text-align:center}
