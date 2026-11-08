@@ -1,4 +1,4 @@
-import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment} from "../services/gmail-visible.js";
+import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signIn,signOut,session,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
@@ -149,10 +149,16 @@ async function scanGmail(tabId){
  }
  // Do not retain stale files from a previous Gmail conversation.
  showFiles([],"gmail-visible");
+ let diagnostic={cards:0,downloadDescriptors:0,namedNodes:0,filenameLabels:0};
+ try{
+  const [{result}]=await chrome.scripting.executeScript({target:{tabId},func:diagnoseVisibleGmailAttachments});
+  if(result)diagnostic=result;
+ }catch{}
+ const detail=`Gmail markers: ${diagnostic.cards} attachment cards, ${diagnostic.downloadDescriptors} download descriptors, ${diagnostic.filenameLabels} filename labels.`;
  // Mailbox-wide scanning requires the official Google OAuth flow.
 
  if(!configuredForGmail()){
-  notice("No downloadable Gmail attachment cards were found in this open email. For full mailbox scanning, configure Google OAuth. Gmail interface changes may require an updated detector.");
+  notice("No attachment filenames recognized. "+detail+" For full mailbox scanning, Google OAuth is required.");
   $("gmail-setup").hidden=false;return;
  }
  notice("Connecting to Gmail…");
