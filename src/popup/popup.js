@@ -24,7 +24,7 @@ function filtered(){
     (type==="attachment"&&(isEmail(f)||f.kind==="attachment"))||
     (type==="image"&&(isEmail(f)?typeOf(f)==="image":isMeaningfulImage(f)))||
     (type==="pdf"&&typeOf(f)==="pdf")||
-    (type==="other"&&typeOf(f)==="other");
+    (type==="other"&&(typeOf(f)==="other"||(isEmail(f)&&typeOf(f)==="attachment")));
   return show&&(!search||[f.name,f.subject||"",f.from||"",f.url||""].some(s=>s.toLowerCase().includes(search)));
  });
 }
