@@ -27,7 +27,9 @@ test("no redundant Gmail mailbox-search field appears in main popup",()=>{
 });
 test("Gmail current-message downloads remain license-gated and select their own card",()=>{
  assert.match(js,/await mustHaveLicense\(\)/);
- assert.match(js,/downloadVisibleGmailAttachment,args:\[f.position,f.name\]/);
+ assert.match(js,/func:downloadVisibleGmailAttachment/);
+ assert.match(js,/args:\[f.position,f.name\]/);
+ assert.match(js,/PREPARE_GMAIL_DOWNLOAD/);
  assert.match(js,/if\(source==="gmail-visible"&&state.files.length===1\)/);
 });
 
@@ -37,5 +39,16 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
  assert.match(js,/accountUser\(\)/);
  assert.match(js,/chrome\.downloads\.search/);
  assert.match(js,/world:"MAIN"/);
- assert.match(js,/Chrome detected/);
+ assert.match(js,/Chrome started/);
+ assert.match(js,/GET_GMAIL_FOLDER_STATE/);
+});
+
+test("main popup uses the available 600px height and a larger scrolling file list",()=>{
+ assert.match(css,/width:490px/);
+ assert.match(css,/height:600px/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 auto/);
+});
+test("account identity and plan are clearly labeled",()=>{
+ assert.match(js,/Current plan:/);
+ assert.match(js,/Signed in/);
 });
