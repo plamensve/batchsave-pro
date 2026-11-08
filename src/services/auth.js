@@ -9,7 +9,7 @@ async function request(path,options={}){
 export async function signUp(email,password){return request("/auth/v1/signup",{method:"POST",body:JSON.stringify({email,password})});}
 export async function signIn(email,password){
  const auth=await request("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
- await chrome.storage.local.set({batchsaveSession:auth});return auth;
+ auth.expires_at=Math.floor(Date.now()/1000)+(auth.expires_in||3600);await chrome.storage.local.set({batchsaveSession:auth});return auth;
 }
 export async function signOut(){await chrome.storage.local.remove("batchsaveSession");}
 export async function session(){
@@ -19,7 +19,7 @@ export async function session(){
  if(!s.refresh_token)return null;
  try{
  const next=await request("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:JSON.stringify({refresh_token:s.refresh_token})});
- await chrome.storage.local.set({batchsaveSession:next});return next;
+ next.expires_at=Math.floor(Date.now()/1000)+(next.expires_in||3600);await chrome.storage.local.set({batchsaveSession:next});return next;
  }catch{await signOut();return null;}
 }
 export async function entitlement(){
