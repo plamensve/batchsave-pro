@@ -9,3 +9,5 @@
 .auth-panel input:focus-visible,.auth-panel button:focus-visible{outline:2px solid #306ce6;outline-offset:2px}
 
 .auth-panel{position:relative}.auth-feedback{max-height:110px;overflow:auto;font-size:12px}.version{min-width:45px;text-align:center}
+
+.scan-feedback{margin:0 16px 10px;padding:9px 11px;border:1px solid #c7d9f3;border-radius:8px;color:#2b527d;background:#eaf3ff;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
