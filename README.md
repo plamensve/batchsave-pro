@@ -23,3 +23,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md).
 ## ZIP downloads
 
 Select files and choose **Download ZIP**. The browser requests access to the selected download origins. ZIP creation is local, limited to 150 items / 100 MB, and requires the Chrome popup to remain open while fetching. Some sources block cross-site fetching, are behind authentication, or redirect to unsupported URLs; use individual downloads in those cases. ZIP uses the STORE method (no further compression).
+
+## Product direction
+
+The default filter now prioritizes real file links and substantial photos instead of icons and website graphics. HTML `download` links are recognized even when their URLs have no extension. Gmail attachments still require the official Gmail API and explicit Google OAuth consent; page scanning cannot fetch Gmail attachments. See [Product Direction](docs/PRODUCT_DIRECTION.md).
