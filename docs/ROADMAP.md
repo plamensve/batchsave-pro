@@ -3,7 +3,7 @@
 ## Implemented
 - Manifest V3 popup, scanner, filters and batch downloads through Chrome Downloads API.
 - Email/password authentication using Supabase Auth.
-- Database-controlled 72-hour trial, RLS isolation and server-verified entitlement at download.
+- Stripe subscription-controlled 72-hour trial, RLS isolation and server-verified entitlement at download.
 - Account status and Checkout / Manage Billing buttons (server endpoints must be configured).
 
 ## Pending
