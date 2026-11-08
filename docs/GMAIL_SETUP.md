@@ -8,7 +8,7 @@ The browser extension includes production-shaped Gmail API code, but **Google OA
 2. Enable **Gmail API** under APIs & Services > Library.
 3. Configure Google Auth Platform branding and audience, add your own email as a test user while in Testing.
 4. Under Google Auth Platform > Clients, create an **OAuth client ID** of type **Chrome Extension**.
-5. Chrome requires a **stable extension ID**. The easiest approach is to upload an unpacked draft to Chrome Web Store (do not publish) and use its generated extension ID, then add that ID to the Google OAuth client. If testing only locally, generate/retain a consistent extension key; do not commit sensitive private keys.
+5. The Gmail manager includes a **Copy extension ID** button; use the copied 32-character value as Google Cloud **Item ID**. Chrome requires a **stable extension ID**. The easiest approach is to upload an unpacked draft to Chrome Web Store (do not publish) and use its generated extension ID, then add that ID to the Google OAuth client. If testing only locally, generate/retain a consistent extension key; do not commit sensitive private keys.
 6. Replace `000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com` in `manifest.json` > `oauth2.client_id` with the new Chrome Extension OAuth client ID.
 7. Reload the extension in `chrome://extensions`.
 8. Press **Connect Gmail**. Google will request explicit read-only consent.
