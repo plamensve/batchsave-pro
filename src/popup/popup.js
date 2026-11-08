@@ -1,5 +1,6 @@
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
+import {batchFolder} from "../lib/download-batch.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signIn,signOut,session,accountUser,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
@@ -79,7 +80,7 @@ function displayProfile(user,plan){
  $("account-name").textContent=identity;
  $("account-avatar").textContent=identity.trim().charAt(0).toUpperCase()||"B";
  $("account-email").textContent=user?.email||"Email unavailable";
- $("account-license").textContent=plan||"Subscription status unavailable";
+ $("account-license").textContent="Current plan: "+(plan||"Unavailable");
  $("account-details").hidden=false;
 }
 async function refreshAccount(){
@@ -107,8 +108,8 @@ async function refreshAccount(){
     info?.subscription_status||"No active subscription";
   displayProfile(current,license);
   message(state.access
-   ?(info?.subscription_status==="tester"?"Internal testing access active":remaining>0?"Trial · "+Math.ceil(remaining/3600000)+" hours left":"Pro subscription active")
-   :"Signed in · start your 3-day trial to download");
+   ?(info?.subscription_status==="tester"?"✓ Signed in · Tester access active":remaining>0?"✓ Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"✓ Signed in · Pro active")
+   :"✓ Signed in · Trial or subscription required");
   $("billing-actions").hidden=false;
   $("upgrade").hidden=state.access||["active","trialing"].includes(info?.subscription_status);
   $("manage").hidden=!info?.subscription_status||info.subscription_status==="tester";
@@ -237,47 +238,60 @@ $("download").addEventListener("click",async()=>{
  state.busy=true;updateCount();
  try{
   await mustHaveLicense();
+
   if(state.source==="gmail-visible"){
    const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
-   if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the original Gmail email again.");
-   let confirmed=0;
+   if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the Gmail message again.");
+   const folder=batchFolder();
+   let confirmed=0,unrouted=0;
    for(const f of files){
-    notice("Requesting Gmail download: "+f.name);
-    const previous=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
-    const known=new Set(previous.map(item=>item.id));
-    // Execute in the page's own JS world; Gmail may attach its handler there.
-    const [{result}]=await chrome.scripting.executeScript({
-      target:{tabId:tab.id},world:"MAIN",
-      func:downloadVisibleGmailAttachment,args:[f.position,f.name]
+    notice("Preparing "+f.name+" in Downloads/"+folder+"…");
+    const prior=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+    const known=new Set(prior.map(item=>item.id));
+    const prep=await chrome.runtime.sendMessage({
+     type:"PREPARE_GMAIL_DOWNLOAD",folder,expectedName:f.name
     });
-    if(!result?.ok)throw Error((result?.error||"Gmail download control unavailable")+" ("+confirmed+" confirmed)");
-    let detected=null;
-    for(let n=0;n<7;n++){
-      await new Promise(resolve=>setTimeout(resolve,400));
+    if(!prep?.ok)throw Error(prep?.error||"Cannot prepare Gmail destination folder.");
+    try{
+     const [{result}]=await chrome.scripting.executeScript({
+      target:{tabId:tab.id},world:"MAIN",func:downloadVisibleGmailAttachment,
+      args:[f.position,f.name]
+     });
+     if(!result?.ok)throw Error(result?.error||"Gmail download is unavailable");
+     let detected=null,renamed=false;
+     for(let attempt=0;attempt<12;attempt++){
+      await new Promise(resolve=>setTimeout(resolve,350));
       const current=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
       detected=current.find(item=>!known.has(item.id))||null;
-      if(detected)break;
+      const routing=await chrome.runtime.sendMessage({type:"GET_GMAIL_FOLDER_STATE"});
+      renamed=!!(routing?.handled&&routing.downloadId===detected?.id);
+      if(detected&&renamed)break;
+     }
+     if(!detected)throw Error("Chrome did not start a download for "+f.name+". The Gmail Download control may be blocked.");
+     confirmed++;
+     if(!renamed)unrouted++;
+     notice("Chrome started "+confirmed+"/"+files.length+" download(s).");
+    }finally{
+     await chrome.runtime.sendMessage({type:"CLEAR_GMAIL_FOLDER"}).catch(()=>{});
     }
-    if(!detected){
-      throw Error("Gmail button was activated, but Chrome did not start a download for "+f.name+". Hover the attachment and use Gmail's Download icon. Google OAuth is needed for reliable direct downloads.");
-    }
-    confirmed++;
-    notice("Chrome started "+confirmed+"/"+files.length+" download(s).");
    }
-   notice("Chrome detected "+confirmed+" new download(s). Check Downloads for completion.");
+   notice(unrouted
+    ?confirmed+" download(s) started, but "+unrouted+" could not be placed in the common folder. Check Chrome Downloads."
+    :confirmed+" download(s) started in Downloads/"+folder+".");
   }else if(state.source==="gmail"){
+   const folder=batchFolder();
    let completed=0;
    for(const f of files){
     notice("Downloading Gmail attachment "+(completed+1)+"/"+files.length+"…");
     const bytes=await readGmailAttachment(f);
-    await saveBlob(new Blob([bytes],{type:f.mimeType||"application/octet-stream"}),"BatchSave/Gmail/"+safeName(f.name));
+    await saveBlob(new Blob([bytes],{type:f.mimeType||"application/octet-stream"}),folder+"/"+safeName(f.name));
     completed++;
    }
-   notice("Started "+completed+" Gmail attachment downloads. Keep this popup open until complete.");
+   notice("Started "+completed+" Gmail downloads in Downloads/"+folder+".");
   }else{
    const response=await chrome.runtime.sendMessage({type:"BATCH_DOWNLOAD",items:files.map(f=>({url:f.url,filename:f.name}))});
    if(!response?.ok)throw Error(response?.error||"Download failed");
-   notice("Started "+response.started+" downloads"+(response.failed?" · "+response.failed+" failed":"")+".");
+   notice("Started "+response.started+" downloads in Downloads/"+response.folder+(response.failed?" · "+response.failed+" failed":"")+".");
   }
  }catch(e){notice("Download failed: "+e.message);}
  finally{state.busy=false;updateCount();}
@@ -310,7 +324,7 @@ $("download-zip").addEventListener("click",async()=>{
    if(total>SIZE_LIMIT)throw Error("ZIP exceeds 100 MB limit.");
    entries.push({name:f.name,bytes});
   }
-  await saveBlob(makeZip(entries),"BatchSave/"+(state.source==="gmail"?"gmail-":"")+"files-"+new Date().toISOString().slice(0,10)+".zip",true);
+  await saveBlob(makeZip(entries),batchFolder()+"/files.zip",true);
   notice("ZIP ready: "+entries.length+" files.");
  }catch(e){notice("ZIP failed: "+e.message);}
  finally{state.busy=false;updateCount();}
