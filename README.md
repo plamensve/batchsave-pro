@@ -49,3 +49,13 @@ Status and errors are shown directly below the Scan button; the user should not 
 Open a Gmail message with a visible attachment card and press **Scan this page**. The popup hides the old `has:attachment` field for current-message scanning, lists the attachment with a decoded filename, and keeps **Download selected** visible in the popup footer. One discovered attachment is selected automatically. Click the button to trigger Gmail's own download control. The UI reports that the native click was triggered, not that the file was necessarily saved; confirm the actual download in Chrome.
 
 A temporary owner tester license is available via Supabase entitlement, independent of Stripe billing. Gmail's page structure is not a stable public API: native-click scanning is best effort, while full reliable Gmail attachment retrieval still needs Google OAuth/Gmail API.
+
+## Developer testing and login persistence (0.7.2)
+
+**Do not repeatedly install each GitHub ZIP into a different folder.** Chrome stores the Supabase login session separately for each extension ID, and a new unpacked folder can produce a different extension ID. To retain the same local session, extract updates into the original extension folder and press **Reload** on the existing BatchSave extension in `chrome://extensions`. If the extension ID already changed, sign in once in the new installation.
+
+The main popup now keeps **Download selected** next to **Scan this page**, so it is always visible when the result list is long. Confirmed testing accounts can download files without a Stripe charge while their tester license is valid.
+
+Gmail attachment discovery is based on the visible Gmail page, which is not a stable Google API. If the scanner cannot identify attachments, it reports only counts of attachment DOM markers (no email content) so regressions can be diagnosed. Reliable mailbox-wide Gmail exports require Google OAuth + Gmail API; the OAuth ID is still a placeholder and **must be configured** before a production release.
+
+Supabase auth access tokens rotate. A cross-context Web Lock coordinates token refresh between popup and extension service worker when Web Locks are available, and temporary network failures no longer delete the stored session. Changing the extension ID still cannot preserve another extension's local storage.
