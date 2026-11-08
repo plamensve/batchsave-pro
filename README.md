@@ -27,3 +27,7 @@ Select files and choose **Download ZIP**. The browser requests access to the sel
 ## Product direction
 
 The default filter now prioritizes real file links and substantial photos instead of icons and website graphics. HTML `download` links are recognized even when their URLs have no extension. Gmail attachments still require the official Gmail API and explicit Google OAuth consent; page scanning cannot fetch Gmail attachments. See [Product Direction](docs/PRODUCT_DIRECTION.md).
+
+## Gmail attachment downloader
+
+Chrome popup → **Open Gmail attachments** opens the full-page Gmail attachment manager. The code uses the official Gmail API with Chrome Identity, lists emails matching Gmail search syntax, retrieves real file parts and exports individual files or local ZIP archives. **A Google Cloud OAuth client is required to activate the Gmail connection.** See [Gmail OAuth Setup](docs/GMAIL_SETUP.md). Google has not approved this OAuth application for public users yet. No Gmail data is uploaded to Supabase.
