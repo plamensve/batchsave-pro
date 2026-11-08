@@ -20,7 +20,7 @@ Deno.serve(async(req)=>{
   if(existing?.length)return json({error:"Existing subscription found. Use Manage billing."},409);
   const stripe=new Stripe(secret);
   try{
-    const checkoutBase=base+"/functions/v1/create-checkout";
+    const checkoutBase=base+"/functions/v1/checkout-return";
     const session=await stripe.checkout.sessions.create({
       mode:"subscription",
       line_items:[{price,quantity:1}],
