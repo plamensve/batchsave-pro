@@ -516,14 +516,6 @@ footer{
 .account-status{gap:6px}
 .status-svg{width:16px;height:16px;flex-basis:16px;color:#278564}
 .account-status[data-tone="warning"] .status-svg{color:#b17b20}
-.scan-feedback{
- display:flex;
- align-items:flex-start;
- gap:7px;
- padding:7px 10px;
-}
-.scan-feedback .info-svg{width:15px;height:15px;flex-basis:15px;margin-top:0;color:#4b76b2}
-.scan-feedback-text{min-width:0}
 .gmail-label strong{padding-left:0}
 .notice{
  display:flex;
