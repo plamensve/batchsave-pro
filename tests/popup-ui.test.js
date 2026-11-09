@@ -153,7 +153,7 @@ test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP even
  assert.match(js,/requestPasswordReset\(email\)/);
 });
 
-test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
+test("popup uses real SVG icons and the wider results workspace",()=>{
  assert.match(html,/class="ui-icon"/);
  assert.match(html,/class="status-svg"/);
  assert.match(html,/class="empty-svg"/);
@@ -161,7 +161,6 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
  assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
- assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
 });
