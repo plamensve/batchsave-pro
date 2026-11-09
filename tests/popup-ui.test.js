@@ -81,7 +81,7 @@ test("multiple selected page and Gmail API files are routed to a single ZIP",()=
 test("password reset UI cannot leave the stale password in the field",()=>{
  assert.match(html,/id="auth-form" hidden autocomplete="off"/);
  assert.match(html,/id="password"[^>]+autocomplete="off"/);
- assert.match(js,/\$\("password"\)\.value=""/);
+ assert.match(js,/passwordInput\.value=""/);
  assert.match(js,/Password updated successfully/);
 });
 test("multi-select primary download exits through ZIP before any individual-download route",()=>{
@@ -90,4 +90,16 @@ test("multi-select primary download exits through ZIP before any individual-down
  const exit=js.indexOf("return;",zip);
  const batch=js.indexOf('type:"BATCH_DOWNLOAD"',multi);
  assert.ok(multi>=0&&zip>multi&&exit>zip&&batch>exit);
+});
+
+test("password field blocks stale autofill and clears invalid credentials",()=>{
+ assert.match(html,/id="password"[^>]+readonly/);
+ assert.match(js,/function unlockPasswordInput\(\)/);
+ assert.match(js,/passwordInput\.value=""/);
+ assert.match(js,/Supabase rejected that password/);
+});
+test("registration messaging does not claim an existing account was newly created",()=>{
+ assert.ok(!js.includes("Account created. Confirm your email"));
+ assert.match(js,/If this email is new/);
+ assert.match(js,/already have an account/);
 });
