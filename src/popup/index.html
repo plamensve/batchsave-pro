@@ -43,15 +43,43 @@
    <input id="password" type="password" placeholder="Password" autocomplete="off" minlength="6" required aria-label="Account password" readonly>
    <div class="auth-actions">
     <button id="login" class="secondary" type="submit">Sign in</button>
-    <button id="register" class="secondary" type="button">Create account</button>
+    <button id="register" class="secondary create-account-trigger" type="button">
+     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M5 21a7 7 0 0 1 14 0M19 8v4M17 10h4"/></svg>
+     <span>Create account</span>
+    </button>
     <button id="reset-password" class="secondary" type="button">Send reset email</button>
    </div>
   </form>
 
+  <form id="signup-form" class="signup-form" hidden autocomplete="off">
+   <div class="signup-heading">
+    <strong>Create your BatchSave account</strong>
+    <span>Enter your details below. You will confirm the email before signing in.</span>
+   </div>
+   <label class="field-label" for="signup-name">Full name</label>
+   <input id="signup-name" type="text" placeholder="Your name" autocomplete="name" required>
+   <label class="field-label" for="signup-email">Email</label>
+   <input id="signup-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+   <label class="field-label" for="signup-password">Password</label>
+   <input id="signup-password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required>
+   <label class="field-label" for="signup-confirm">Confirm password</label>
+   <input id="signup-confirm" type="password" placeholder="Repeat password" autocomplete="new-password" minlength="8" required>
+   <div class="signup-actions">
+    <button id="signup-submit" class="primary" type="submit">
+     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M5 21a7 7 0 0 1 14 0M17 11l2 2 4-5"/></svg>
+     <span>Create account</span>
+    </button>
+    <button id="signup-cancel" class="secondary" type="button">Back to sign in</button>
+   </div>
+  </form>
+
   <div class="auth-actions billing-actions" id="billing-actions" hidden>
-   <button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button>
+   <button id="upgrade" class="primary subscription-action" type="button">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9h18M7 15h3"/></svg>
+    <span class="upgrade-label">Start 3-day free trial · €9.90/month</span>
+   </button>
    <button id="manage" class="secondary" type="button" hidden>Billing</button>
-   <button id="logout" class="secondary logout-button" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4m4-4H9"/></svg><span>Sign out</span></button>
+   <button id="logout" class="secondary logout-button session-action" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4m4-4H9"/></svg><span>Sign out</span></button>
   </div>
  </section>
 
