@@ -120,3 +120,9 @@ test("license validation happens at click time and surfaces sign-in requirements
  assert.match(js,/Sign in is required before downloading/);
  assert.match(js,/reportDownloadError/);
 });
+
+test("tester accounts keep a visible Stripe checkout button without losing tester access",()=>{
+ assert.match(js,/const tester=info\?\.subscription_status==="tester"/);
+ assert.match(js,/Test Stripe checkout · €9\.90\/month/);
+ assert.match(js,/\$\("upgrade"\)\.hidden=!tester/);
+});
