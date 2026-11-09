@@ -19,6 +19,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install local PDF engine
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          mkdir -p src/vendor
+          cp node_modules/pdf-lib/dist/pdf-lib.min.js src/vendor/pdf-lib.min.js
+          cp node_modules/pdf-lib/LICENSE.md src/vendor/pdf-lib.LICENSE.md
       - name: Validate extension
         run: |
           npm run check
@@ -45,6 +51,9 @@ jobs:
               assert z.testzip() is None
               assert f'{root}/manifest.json' in z.namelist()
               assert f'{root}/src/popup/index.html' in z.namelist()
+              assert f'{root}/src/settings/index.html' in z.namelist()
+              assert f'{root}/src/pdf-tools/index.html' in z.namelist()
+              assert f'{root}/src/vendor/pdf-lib.min.js' in z.namelist()
               assert all(item.startswith(root + '/') for item in z.namelist())
               print(f'Packaged {name} ({len(z.namelist())} files)')
           with open('/tmp/zip-name', 'w') as f:
