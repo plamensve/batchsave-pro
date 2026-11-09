@@ -134,12 +134,15 @@ button:disabled{opacity:.55;cursor:not-allowed}
 </script>
 </body>
 </html>`;
- const headers=new Headers();
- headers.set("Content-Type","text/html; charset=utf-8");
- headers.set("Content-Security-Policy",`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src ${project}; base-uri 'none'; frame-ancestors 'none'`);
- headers.set("Referrer-Policy","no-referrer");
- headers.set("Cache-Control","no-store, max-age=0");
- headers.set("X-Content-Type-Options","nosniff");
- headers.set("X-Frame-Options","DENY");
- return new Response(html,{status:200,headers});
+ return new Response(html,{
+  status:200,
+  headers:{
+   "content-type":"text/html; charset=UTF-8",
+   "content-disposition":"inline; filename=\"batchsave-password-reset.html\"",
+   "content-security-policy":`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src ${project}; base-uri 'none'; frame-ancestors 'none'`,
+   "referrer-policy":"no-referrer",
+   "cache-control":"no-store, max-age=0",
+   "x-frame-options":"DENY"
+  }
+ });
 });
