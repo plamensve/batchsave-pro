@@ -126,7 +126,7 @@ test("license validation happens at click time and surfaces sign-in requirements
 });
 
 test("tester accounts keep a visible Stripe checkout button without losing tester access",()=>{
- assert.match(js,/const tester=info\?\.subscription_status==="tester"/);
+ assert.match(js,/const tester=subscriptionStatus==="tester"/);
  assert.match(js,/Test Stripe checkout · €9\.90\/month/);
  assert.match(js,/\$\("upgrade"\)\.hidden=!tester/);
 });
@@ -243,4 +243,18 @@ test("Workspace control is removed and replaced by a header logout icon",()=>{
  assert.ok(!html.includes('id="open-workspace"'));
  assert.match(html,/id="logout" class="header-signout"/);
  assert.match(html,/aria-label="Sign out"/);
+});
+
+test("paid and trial accounts use explicit BatchSave Pro plan labels",()=>{
+ assert.match(js,/subscriptionStatus==="active"\?"BatchSave Pro · Active"/);
+ assert.match(js,/subscriptionStatus==="trialing"\?"BatchSave Pro · Trial"/);
+ assert.match(js,/Signed in · BatchSave Pro active/);
+});
+test("active or trial subscriptions expose Manage subscription instead of checkout",()=>{
+ assert.match(html,/id="manage" class="secondary manage-subscription"/);
+ assert.match(html,/Manage subscription/);
+ assert.match(js,/const managedSubscription=\["active","trialing"\]\.includes\(subscriptionStatus\)/);
+ assert.match(js,/\$\("upgrade"\)\.hidden=!tester&&managedSubscription/);
+ assert.match(js,/\$\("manage"\)\.hidden=!managedSubscription/);
+ assert.match(css,/\.billing-actions \.manage-subscription/);
 });
