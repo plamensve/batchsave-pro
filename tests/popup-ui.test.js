@@ -46,7 +46,7 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
 test("main popup uses the available 600px height and a larger scrolling file list",()=>{
  assert.match(css,/width:620px/);
  assert.match(css,/height:600px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 auto;min-height:185px/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
 });
 test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
@@ -158,4 +158,29 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(css,/min-height:185px/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
+});
+
+test("last scan is restored from session storage and full workspace can reopen it",()=>{
+ assert.match(js,/SCAN_STATE_KEY/);
+ assert.match(js,/makeScanSnapshot/);
+ assert.match(js,/restoreScanState\(\)/);
+ assert.match(js,/chrome\.storage\.session\.set/);
+ assert.match(js,/chrome\.windows\.create/);
+ assert.match(css,/html\.full-workspace/);
+});
+test("ZIP button can archive all visible files without manual selection",()=>{
+ assert.match(js,/const files=selectedFiles\(\)\.length\?selectedFiles\(\):filtered\(\)/);
+ assert.match(js,/ZIP all visible/);
+ assert.match(js,/downloadNativeGmailZip/);
+ assert.match(js,/downloadAllVisibleGmailAttachments/);
+});
+test("Stripe checkout shows an animated 3 2 1 launch state",()=>{
+ assert.match(js,/for\(const n of \[3,2,1\]\)/);
+ assert.match(js,/Opening Stripe · /);
+ assert.match(js,/billing-launching/);
+ assert.match(css,/@keyframes billingSweep/);
+});
+test("primary scan/download command bar is above the account panel",()=>{
+ const toolbar=html.indexOf('class="toolbar"'),account=html.indexOf('class="auth-panel"');
+ assert.ok(toolbar>0&&toolbar<account);
 });
