@@ -62,13 +62,15 @@ button:disabled{opacity:.55;cursor:not-allowed}.help{font-size:11px;color:#71809
     body:JSON.stringify({password:next}),cache:"no-store"
    });
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw new Error(data.msg||data.error_description||data.message||data.error||("Update failed (HTTP "+response.status+")"));
+   if(!response.ok){const error=new Error(data.msg||data.error_description||data.message||data.error||("Update failed (HTTP "+response.status+")"));error.code=data.error_code||data.code||data.error||"";throw error;}
    form.hidden=true;password.value="";confirm.value="";
    setStatus("Password updated successfully. Return to BatchSave Pro and sign in with your new password.","success");
   }catch(err){
+   const code=String(err?.code||"");
    const message=String(err?.message||err||"Password update failed.");
    const expired=/expired|invalid.*token|jwt/i.test(message);
-   setStatus(expired?"This recovery link has expired or was already used. Send a new reset email from BatchSave Pro.":"Password update failed: "+message,"error");
+   if(code==="same_password")setStatus("The new password is identical to the current password. Choose a different password.","error");
+   else setStatus(expired?"This recovery link has expired or was already used. Send a new reset email from BatchSave Pro.":"Password update failed: "+message,"error");
    submit.disabled=false;submit.textContent="Update password";
   }
  });
