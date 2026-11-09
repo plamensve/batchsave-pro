@@ -292,6 +292,12 @@ $("download").addEventListener("click",async()=>{
  const files=selectedFiles();if(!files.length)return;
  state.busy=true;updateCount();
  try{
+  if(files.length>1&&state.source!=="gmail-visible"){
+   await requestZipPermissions(files);
+   await mustHaveLicense();
+   await downloadZipFiles(files);
+   return;
+  }
   await mustHaveLicense();
 
   if(state.source==="gmail-visible"){
@@ -351,36 +357,42 @@ $("download").addEventListener("click",async()=>{
  }catch(e){notice("Download failed: "+e.message);}
  finally{state.busy=false;updateCount();}
 });
-$("download-zip").addEventListener("click",async()=>{
- const files=selectedFiles();
- if(!files.length)return;
- if(state.source==="gmail-visible"){notice("ZIP of Gmail attachments requires Google OAuth. Use Download files for this open message.");return;}
- if(files.length>150){notice("ZIP supports up to 150 files.");return;}
- if(state.source!=="gmail"){
-  const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
-  try{if(!await chrome.permissions.request({origins}))throw Error("Site permission denied");}
-  catch(e){notice("ZIP permissions: "+e.message);return;}
+async function requestZipPermissions(files){
+ if(state.source==="gmail")return;
+ if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
+ const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
+ if(origins.length&&!(await chrome.permissions.request({origins})))
+  throw Error("Site access denied. Allow access to the file hosts to build a ZIP.");
+}
+async function downloadZipFiles(files){
+ if(!files.length)throw Error("Select at least one file.");
+ if(files.length>150)throw Error("ZIP supports up to 150 files.");
+ if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
+ const entries=[];let total=0;
+ for(const f of files){
+  notice("Adding to ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
+  if(total+(f.size||0)>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
+  let bytes;
+  if(state.source==="gmail")bytes=await readGmailAttachment(f);
+  else{
+   const response=await fetch(f.url,{credentials:"include"});
+   if(!response.ok)throw Error("HTTP "+response.status+" for "+f.name);
+   bytes=new Uint8Array(await response.arrayBuffer());
+  }
+  total+=bytes.byteLength;
+  if(total>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
+  entries.push({name:f.name,bytes});
  }
+ await saveBlob(makeZip(entries),batchFolder()+"/files.zip",false);
+ notice("One ZIP archive downloaded with "+entries.length+" file(s).");
+}
+$("download-zip").addEventListener("click",async()=>{
+ const files=selectedFiles();if(!files.length)return;
  state.busy=true;updateCount();
  try{
+  await requestZipPermissions(files);
   await mustHaveLicense();
-  const entries=[];let total=0;
-  for(const f of files){
-   notice("Preparing ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
-   if(total+(f.size||0)>SIZE_LIMIT)throw Error("ZIP exceeds 100 MB limit.");
-   let bytes;
-   if(state.source==="gmail")bytes=await readGmailAttachment(f);
-   else{
-    const r=await fetch(f.url,{credentials:"include"});
-    if(!r.ok)throw Error("HTTP "+r.status+" for "+f.name);
-    bytes=new Uint8Array(await r.arrayBuffer());
-   }
-   total+=bytes.byteLength;
-   if(total>SIZE_LIMIT)throw Error("ZIP exceeds 100 MB limit.");
-   entries.push({name:f.name,bytes});
-  }
-  await saveBlob(makeZip(entries),batchFolder()+"/files.zip",true);
-  notice("ZIP ready: "+entries.length+" files.");
+  await downloadZipFiles(files);
  }catch(e){notice("ZIP failed: "+e.message);}
  finally{state.busy=false;updateCount();}
 });
