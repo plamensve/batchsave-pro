@@ -689,3 +689,24 @@ footer{
 .results{
  box-shadow:0 6px 18px rgba(35,71,130,.08);
 }
+
+/* v0.10.1 subscription management */
+.billing-actions .manage-subscription{
+ flex:1 1 100%;
+ min-height:42px;
+ color:#174a9c;
+ border-color:#b7cdec;
+ background:linear-gradient(180deg,#f8fbff,#edf4ff);
+ font-weight:800;
+ box-shadow:0 5px 14px rgba(38,83,156,.10),inset 0 1px 0 #fff;
+}
+.billing-actions .manage-subscription:hover{
+ color:#103e89;
+ border-color:#8fb0df;
+ background:linear-gradient(180deg,#f2f7ff,#e3edff);
+}
+.billing-actions .manage-subscription .ui-icon{
+ width:16px;
+ height:16px;
+ color:#235fb8;
+}
