@@ -21,9 +21,11 @@ test("primary download button is always above the results list",()=>{
  assert.equal([...html.matchAll(/\bid="download"/g)].length,1);
  assert.match(css,/\.toolbar #download/);
 });
-test("no redundant Gmail mailbox-search field appears in main popup",()=>{
+test("public popup uses visible Gmail attachments without an OAuth fallback",()=>{
  assert.ok(!html.includes('id="gmail-query"'));
- assert.match(js,/query:"has:attachment"/);
+ assert.ok(!js.includes("gmailToken("));
+ assert.ok(!js.includes("listGmailAttachments("));
+ assert.match(js,/scanVisibleGmailAttachments/);
 });
 test("Gmail current-message downloads remain license-gated and select their own card",()=>{
  assert.match(js,/await mustHaveLicense\(\)/);
