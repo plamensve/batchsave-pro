@@ -15,6 +15,23 @@ const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
 const IMAGE_NAME_RE=/\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:$|[?#])/i;
 const PDF_NAME_RE=/\.pdf(?:$|[?#])/i;
+const SVG_NS="http://www.w3.org/2000/svg";
+const VECTOR_ICONS={
+ image:[["rect",{x:"3",y:"4",width:"18",height:"16",rx:"3"}],["circle",{cx:"9",cy:"9",r:"1.5"}],["path",{d:"m5.5 17 4.5-4 3 2.5 2.5-2 3 3"}]],
+ pdf:[["path",{d:"M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"}],["path",{d:"M14 3v5h5M8 13h8M8 17h6"}]],
+ attachment:[["path",{d:"m9.5 12.5 5.2-5.2a3 3 0 1 1 4.2 4.2l-7.4 7.4a5 5 0 0 1-7.1-7.1l7.8-7.8"}],["path",{d:"m7.2 14.8 7-7"}]],
+ file:[["path",{d:"M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"}],["path",{d:"M14 3v5h5"}]]
+};
+function vectorIcon(name,className="ui-icon"){
+ const svg=document.createElementNS(SVG_NS,"svg");
+ svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");svg.classList.add(className);
+ for(const [tag,attrs] of (VECTOR_ICONS[name]||VECTOR_ICONS.file)){
+  const node=document.createElementNS(SVG_NS,tag);
+  for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
+  svg.append(node);
+ }
+ return svg;
+}
 const isPreviewableImage=f=>typeOf(f)==="image"||f.mimeType?.startsWith("image/")||IMAGE_NAME_RE.test(f.name||"")||IMAGE_NAME_RE.test(f.url||"");
 const isPreviewablePdf=f=>typeOf(f)==="pdf"||f.mimeType==="application/pdf"||PDF_NAME_RE.test(f.name||"")||PDF_NAME_RE.test(f.url||"");
 let previewBlobUrl=null,previewFocus=null;
@@ -78,7 +95,11 @@ async function openPreview(file,button){
 $("preview-close").addEventListener("click",closePreview);
 $("preview-dialog").addEventListener("click",event=>{if(event.target===$("preview-dialog"))closePreview();});
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("preview-dialog").hidden)closePreview();});
-function notice(msg){$("status").textContent=msg;$("scan-feedback").textContent=msg;}
+function notice(msg){
+ const status=$("status"),text=status.querySelector(".notice-text");
+ if(text)text.textContent=msg;else status.textContent=msg;
+ $("scan-feedback").textContent=msg;
+}
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
  if(msg)box.scrollIntoView({block:"nearest",behavior:"instant"});
@@ -123,7 +144,8 @@ function updateCount(){
  const count=state.selected.size,available=!state.busy;
  $("selected").textContent=count+" selected";
  $("download").disabled=!count||!available;
- $("download").textContent=count>1?"Download ZIP ("+count+")":"Download file";
+ const label=$("download").querySelector(".button-label");
+ if(label)label.textContent=count>1?"Download ZIP ("+count+")":"Download file";
  $("download-zip").hidden=false;
  $("download-zip").disabled=!count||!available;
  $("clear-selection").disabled=!count||state.busy;
@@ -158,14 +180,14 @@ function render(){
   if(isPreviewableImage(f)&&f.source!=="gmail-visible"){
    const image=document.createElement("img");image.className="file-thumb";
    image.alt="";image.loading="lazy";image.decoding="async";image.referrerPolicy="no-referrer";
-   const fallback=document.createElement("span");fallback.className="preview-fallback";fallback.textContent="▧";
+   const fallback=document.createElement("span");fallback.className="preview-fallback";fallback.append(vectorIcon("image","preview-vector"));
    fallback.hidden=!!f.url;image.hidden=!f.url;
    image.addEventListener("error",()=>{image.hidden=true;fallback.hidden=false;});
    if(f.url)image.src=f.url;
    trigger.append(image,fallback);
   }else{
    const symbol=document.createElement("span");symbol.className="preview-fallback";
-   symbol.textContent=isPreviewablePdf(f)?"▤":isEmail(f)?"📎":"↓";
+   symbol.append(vectorIcon(isPreviewablePdf(f)?"pdf":isEmail(f)?"attachment":"file","preview-vector"));
    trigger.append(symbol);
   }
   trigger.addEventListener("click",()=>openPreview(f,trigger));
@@ -218,8 +240,8 @@ async function refreshAccount(){
     info?.subscription_status||"No active subscription";
   displayProfile(current,license);
   message(state.access
-   ?(info?.subscription_status==="tester"?"✓ Signed in · Tester access active":remaining>0?"✓ Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"✓ Signed in · Pro active")
-   :"✓ Signed in · Trial or subscription required");
+   ?(info?.subscription_status==="tester"?"Signed in · Tester access active":remaining>0?"Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"Signed in · Pro active")
+   :"Signed in · Trial or subscription required");
   $("billing-actions").hidden=false;
   const tester=info?.subscription_status==="tester";
    $("upgrade").hidden=!tester&&(state.access||["active","trialing"].includes(info?.subscription_status));
