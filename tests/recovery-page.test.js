@@ -5,12 +5,16 @@ import {readFileSync} from "node:fs";
 const redirect=readFileSync(new URL("../supabase/functions/account-recovery/index.ts",import.meta.url),"utf8");
 const page=readFileSync(new URL("../web/account-recovery.html",import.meta.url),"utf8");
 
-test("Supabase recovery Edge Function redirects instead of serving unsupported HTML",()=>{
- assert.match(redirect,/status:302/);
- assert.match(redirect,/Location/);
- assert.match(redirect,/plamensve\.github\.io\/DS_ML_DL_PORTFOLIO\/batchsave\/account-recovery\.html/);
- assert.ok(!redirect.includes("text/html"));
- assert.ok(!redirect.includes("<!doctype html>"));
+test("Supabase recovery Edge Function serves the recovery UI directly",()=>{
+ assert.match(redirect,/<!doctype html>/);
+ assert.match(redirect,/text\/html/);
+ assert.match(redirect,/location\.hash/);
+ assert.match(redirect,/access_token/);
+ assert.match(redirect,/type&&type!=="recovery"/);
+ assert.match(redirect,/method:"PUT"/);
+ assert.match(redirect,/\/auth\/v1\/user/);
+ assert.match(redirect,/same_password/);
+ assert.ok(!redirect.includes("plamensve.github.io/DS_ML_DL_PORTFOLIO/batchsave/account-recovery.html"));
 });
 test("static recovery page accepts the implicit recovery fragment and updates password",()=>{
  assert.match(page,/location\.hash/);
