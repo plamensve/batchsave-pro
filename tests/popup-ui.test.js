@@ -81,7 +81,7 @@ test("multiple selected page and Gmail API files are routed to a single ZIP",()=
 test("password reset UI cannot leave the stale password in the field",()=>{
  assert.match(html,/id="auth-form" hidden autocomplete="off"/);
  assert.match(html,/id="password"[^>]+autocomplete="off"/);
- assert.match(js,/\$\("password"\)\.value=""/);
+ assert.match(js,/passwordInput\.value=""/);
  assert.match(js,/Password updated successfully/);
 });
 test("multi-select primary download exits through ZIP before any individual-download route",()=>{
