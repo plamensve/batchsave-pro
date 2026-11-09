@@ -44,7 +44,7 @@ async function onMessage(message){
   const items=Array.isArray(message.items)?message.items.slice(0,3000):[];
   if(!items.length)return {ok:false,error:"No files selected"};
   const folder=batchFolder();
-  let started=0,failed=0;
+  let started=0,failed=0,errors=[];
   for(const item of items){
    try{
     const u=new URL(item.url);
@@ -54,9 +54,9 @@ async function onMessage(message){
      url:u.href,filename:folder+"/"+filename,conflictAction:"uniquify",saveAs:false
     });
     started++;
-   }catch{failed++;}
+   }catch(error){failed++;if(errors.length<3)errors.push(error.message||String(error));}
   }
-  return {ok:started>0,started,failed,folder,error:started?"":"No downloads could be started."};
+  return {ok:started>0,started,failed,folder,errors,error:started?"":errors[0]||"No downloads could be started."};
  }
  return {ok:false,error:"Unknown message"};
 }
