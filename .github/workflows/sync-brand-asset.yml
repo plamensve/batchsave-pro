@@ -1,0 +1,34 @@
+name: Sync BatchSave brand asset
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - branding/batchsave-logo-128.b64
+      - .github/workflows/sync-brand-asset.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode approved logo
+        run: |
+          mkdir -p src/assets
+          base64 -d branding/batchsave-logo-128.b64 > src/assets/batchsave-logo-128.png
+          file src/assets/batchsave-logo-128.png
+      - name: Commit binary asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/assets/batchsave-logo-128.png
+          if git diff --cached --quiet; then
+            echo "Brand asset already up to date."
+          else
+            git commit -m "Add approved BatchSave Pro logo asset"
+            git push
+          fi
