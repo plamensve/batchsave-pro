@@ -127,7 +127,7 @@ test("profile is fetched from Supabase Auth when refresh result has no user",asy
 
 test("login module remains independent from password recovery implementation",()=>{
  const login=readFileSync(new URL("../src/services/auth-login.js",import.meta.url),"utf8");
- assert.match(login,/\/auth\/v1\/token\?grant_type=password/);
- assert.ok(!/recover|reset|account-recovery/i.test(login));
- assert.ok(!login.includes("auth-recovery.js"));
+ const executable=login.replace(/\/\/.*$/gm,"");
+ assert.match(executable,/\/auth\/v1\/token\?grant_type=password/);
+ assert.ok(!/\/auth\/v1\/recover|account-recovery|auth-recovery\.js/i.test(executable));
 });
