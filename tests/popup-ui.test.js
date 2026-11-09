@@ -258,3 +258,22 @@ test("active or trial subscriptions expose Manage subscription instead of checko
  assert.match(js,/\$\("manage"\)\.hidden=!managedSubscription/);
  assert.match(css,/\.billing-actions \.manage-subscription/);
 });
+
+test("signed-out popup exposes auth only and keeps downloader workspace hidden",()=>{
+ assert.match(html,/id="main-workspace" class="main-workspace" hidden/);
+ assert.match(js,/\$\("main-workspace"\)\.hidden=true/);
+ assert.match(js,/root\.classList\.add\("signed-out"\)/);
+ assert.match(js,/\$\("auth-form"\)\.hidden=false/);
+ assert.match(css,/html\.signed-out/);
+});
+test("signed-in identity and plan live inside the premium header",()=>{
+ const header=html.slice(html.indexOf('<header class="header">'),html.indexOf("</header>")+9);
+ for(const id of ["header-account","account-avatar","account-name","account-email","account-status","account-license","settings","logout"])
+  assert.ok(header.includes('id="'+id+'"'),"missing header account control "+id);
+ assert.match(js,/\$\("header-account"\)\.hidden=false/);
+ assert.match(js,/\$\("settings"\)\.hidden=false/);
+});
+test("Settings button opens the registered Chrome options page",()=>{
+ assert.match(js,/\$\("settings"\)\.addEventListener\("click",\(\)=>chrome\.runtime\.openOptionsPage\(\)\)/);
+ assert.match(css,/\.header-settings/);
+});
