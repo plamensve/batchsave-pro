@@ -213,7 +213,19 @@ function render(){
  const shown=filtered(),target=$("results");target.replaceChildren();
  if(!shown.length){
   const empty=document.createElement("div");empty.className="empty";
-  empty.textContent=isEmail({source:state.source})?"No visible attachments found in the open message.":"No matching files or substantive images.";
+  const title=document.createElement("strong");
+  const detail=document.createElement("span");
+  if(!state.files.length){
+   title.textContent="Ready to scan";
+   detail.textContent="Open a page or Gmail and click Scan this page.";
+  }else if(isEmail({source:state.source})){
+   title.textContent="No matching attachments";
+   detail.textContent="Try another filter or scan the Gmail message again.";
+  }else{
+   title.textContent="No matching files";
+   detail.textContent="Try another filter or scan the page again.";
+  }
+  empty.append(title,detail);
   target.append(empty);
  }
  for(const [index,f] of shown.entries()){
@@ -256,7 +268,9 @@ function render(){
   row.append(checkbox,trigger,meta,badge);
   target.append(row);
  }
- $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
+ $("count").textContent=state.files.length
+  ?shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files")
+  :"No files scanned";
  updateCount();
 }
 function showFiles(files,source,context={}){
