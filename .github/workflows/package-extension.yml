@@ -38,7 +38,8 @@ jobs:
           paths = [Path('manifest.json'), *sorted(p for p in Path('src').rglob('*') if p.is_file())]
           with ZipFile(Path('dist')/name, 'w', ZIP_DEFLATED, compresslevel=9) as z:
               for p in paths:
-                  arcname = f"{root}/{str(p).replace('\\\\', '/')}"
+                  rel = str(p).replace(chr(92), '/')
+                  arcname = f"{root}/{rel}"
                   z.write(p, arcname)
           with ZipFile(Path('dist')/name) as z:
               assert z.testzip() is None
