@@ -116,6 +116,7 @@ test("all multi-file sources are routed through ZIP planning",()=>{
 });
 test("license validation happens at click time and surfaces sign-in requirements",()=>{
  assert.match(js,/const activeSession=await session\(\)/);
+ assert.match(js,/type:"CHECK_LICENSE"/);
  assert.match(js,/Sign in is required before downloading/);
  assert.match(js,/reportDownloadError/);
 });
