@@ -8,7 +8,6 @@ import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "..
 import {signIn} from "../services/auth-login.js";
 import {requestPasswordReset} from "../services/auth-recovery.js";
 import {initPopupPdfTools} from "./pdf-tools-panel.js";
-import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
 $("settings").addEventListener("click",()=>chrome.runtime.openOptionsPage());
@@ -30,7 +29,7 @@ for(const tab of document.querySelectorAll(".workspace-tab")){
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
-const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
+const isEmail=f=>f.source==="gmail-visible";
 const IMAGE_NAME_RE=/\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:$|[?#])/i;
 const PDF_NAME_RE=/\.pdf(?:$|[?#])/i;
 const SVG_NS="http://www.w3.org/2000/svg";
@@ -75,11 +74,6 @@ function previewDetails(file){
  return parts.join("\n");
 }
 async function previewSource(file){
- if(file.source==="gmail"){
-  const bytes=await readGmailAttachment(file);
-  const url=URL.createObjectURL(new Blob([bytes],{type:file.mimeType||"application/octet-stream"}));
-  previewBlobUrl=url;return url;
- }
  return file.url||"";
 }
 async function openPreview(file,button){
@@ -526,23 +520,7 @@ async function scanGmail(tab){
   if(result)diagnostic=result;
  }catch{}
  const detail=`Gmail markers: ${diagnostic.cards} attachment cards, ${diagnostic.downloadDescriptors} download descriptors, ${diagnostic.filenameLabels} filename labels.`;
- // Mailbox-wide scanning requires the official Google OAuth flow.
-
- if(!configuredForGmail()){
-  notice("No attachment filenames recognized. "+detail+" For full mailbox scanning, Google OAuth is required.");
-  $("gmail-setup").hidden=false;return;
- }
- notice("Connecting to Gmail…");
- // Interactive auth is called from the user's Scan button click.
- await gmailToken(true);
- notice("Reading real Gmail attachments…");
- const response=await listGmailAttachments({
-  query:"has:attachment",
-  maxResults:35,
-  onProgress:(done,total)=>notice("Scanning Gmail messages "+done+"/"+total+"…")
- });
- showFiles(response.files,"gmail",{tabId,tabUrl:tab.url||""});
- notice(response.files.length+" Gmail attachments found in "+response.scannedMessages+" messages"+(response.nextPageToken?" (first page)":"")+".");
+ notice("No attachment filenames recognized. "+detail+" Open a Gmail conversation with visible attachment cards, then scan again.");
 }
 $("scan").addEventListener("click",async()=>{
  const button=$("scan");button.disabled=true;state.busy=true;updateCount();
@@ -657,15 +635,6 @@ $("download").addEventListener("click",async()=>{
    return;
   }
 
-  if(plan.mode==="gmail-api-single"){
-   const f=files[0],folder=batchFolder();
-   notice("Downloading Gmail attachment: "+f.name);
-   const bytes=await readGmailAttachment(f);
-   await saveBlob(new Blob([bytes],{type:f.mimeType||"application/octet-stream"}),folder+"/"+safeName(f.name));
-   notice("Started Gmail download in Downloads/"+folder+".");
-   return;
-  }
-
   const response=await chrome.runtime.sendMessage({
    type:"BATCH_DOWNLOAD",items:files.map(f=>({url:f.url,filename:f.name}))
   });
@@ -699,7 +668,6 @@ async function downloadNativeGmailZip(files){
  return true;
 }
 async function requestZipPermissions(files){
- if(state.source==="gmail")return;
  const missing=files.filter(f=>!f.url);
  if(missing.length)throw Error("Some selected files do not expose a downloadable URL. Rescan the page or Gmail message.");
  const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
@@ -713,18 +681,14 @@ async function downloadZipFiles(files){
  for(const f of files){
   notice("Adding to ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
   if(total+(f.size||0)>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
-  let bytes;
-  if(state.source==="gmail")bytes=await readGmailAttachment(f);
-  else{
-   if(!f.url)throw Error("No downloadable URL for "+f.name);
-   let response=null;
-   try{response=await fetch(f.url,{credentials:"include",redirect:"follow",cache:"no-store"});}catch{}
-   if(!response?.ok){
-    try{response=await fetch(f.url,{credentials:"omit",redirect:"follow",cache:"no-store"});}catch{}
-   }
-   if(!response?.ok)throw Error("Could not fetch "+f.name+(response?" (HTTP "+response.status+")":""));
-   bytes=new Uint8Array(await response.arrayBuffer());
+  if(!f.url)throw Error("No downloadable URL for "+f.name);
+  let response=null;
+  try{response=await fetch(f.url,{credentials:"include",redirect:"follow",cache:"no-store"});}catch{}
+  if(!response?.ok){
+   try{response=await fetch(f.url,{credentials:"omit",redirect:"follow",cache:"no-store"});}catch{}
   }
+  if(!response?.ok)throw Error("Could not fetch "+f.name+(response?" (HTTP "+response.status+")":""));
+  const bytes=new Uint8Array(await response.arrayBuffer());
   total+=bytes.byteLength;
   if(total>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
   entries.push({name:f.name,bytes});
