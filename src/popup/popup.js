@@ -299,20 +299,29 @@ async function refreshAccount(){
   state.access=!!info?.access_granted;
   const expires=info?.trial_ends_at?new Date(info.trial_ends_at).getTime():0;
   const remaining=expires-Date.now();
-  const license=info?.subscription_status==="tester"?"Internal tester license":
-    info?.subscription_status==="active"?"Pro subscription":
-    info?.subscription_status==="trialing"?"3-day trial":
-    info?.subscription_status||"No active subscription";
+  const subscriptionStatus=info?.subscription_status||null;
+  const license=subscriptionStatus==="tester"?"Internal tester license":
+    subscriptionStatus==="active"?"BatchSave Pro · Active":
+    subscriptionStatus==="trialing"?"BatchSave Pro · Trial":
+    subscriptionStatus||"No active subscription";
   displayProfile(current,license);
-  message(state.access
-   ?(info?.subscription_status==="tester"?"Signed in · Tester access active":remaining>0?"Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"Signed in · Pro active")
-   :"Signed in · Trial or subscription required");
+  const signedInStatus=subscriptionStatus==="tester"
+    ?"Signed in · Tester access active"
+    :subscriptionStatus==="trialing"
+      ?(remaining>0?"Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"Signed in · Trial active")
+      :subscriptionStatus==="active"
+        ?"Signed in · BatchSave Pro active"
+        :state.access
+          ?"Signed in · Access active"
+          :"Signed in · Trial or subscription required";
+  message(signedInStatus);
   $("billing-actions").hidden=false;
-  const tester=info?.subscription_status==="tester";
-   $("upgrade").hidden=!tester&&(state.access||["active","trialing"].includes(info?.subscription_status));
-   const upgradeLabel=$("upgrade").querySelector(".upgrade-label");
-   if(upgradeLabel)upgradeLabel.textContent=tester?"Test Stripe checkout · €9.90/month":"Start 3-day free trial · €9.90/month";
-   $("manage").hidden=!info?.subscription_status||tester;
+  const tester=subscriptionStatus==="tester";
+  const managedSubscription=["active","trialing"].includes(subscriptionStatus);
+  $("upgrade").hidden=!tester&&managedSubscription;
+  const upgradeLabel=$("upgrade").querySelector(".upgrade-label");
+  if(upgradeLabel)upgradeLabel.textContent=tester?"Test Stripe checkout · €9.90/month":"Start 3-day free trial · €9.90/month";
+  $("manage").hidden=!managedSubscription;
  }catch(e){
   state.access=false;displayProfile(current,"License check unavailable");
   message("Signed in · license check failed: "+e.message);
