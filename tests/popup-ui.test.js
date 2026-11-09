@@ -103,3 +103,18 @@ test("registration messaging does not claim an existing account was newly create
  assert.match(js,/If this email is new/);
  assert.match(js,/already have an account/);
 });
+
+test("download button depends on selection and busy state, not cached license state",()=>{
+ assert.match(js,/const count=state\.selected\.size,available=!state\.busy/);
+ assert.ok(!js.includes("available=!state.busy&&state.access"));
+});
+test("all multi-file sources are routed through ZIP planning",()=>{
+ assert.match(js,/const plan=downloadPlan\(files,state\.source\)/);
+ assert.match(js,/if\(plan\.mode==="zip"\)/);
+ assert.ok(!js.includes('files.length>1&&state.source!=="gmail-visible"'));
+});
+test("license validation happens at click time and surfaces sign-in requirements",()=>{
+ assert.match(js,/const activeSession=await session\(\)/);
+ assert.match(js,/Sign in is required before downloading/);
+ assert.match(js,/reportDownloadError/);
+});
