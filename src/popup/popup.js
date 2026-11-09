@@ -10,6 +10,39 @@ const state={files:[],selected:new Set(),source:"page",access:false,busy:false,g
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
+const IMAGE_NAME_RE=/\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:$|[?#])/i;
+const isPreviewableImage=f=>typeOf(f)==="image"||f.mimeType?.startsWith("image/")||IMAGE_NAME_RE.test(f.name||"")||IMAGE_NAME_RE.test(f.url||"");
+let previewBlobUrl=null,previewFocus=null;
+function closePreview(){
+ $("preview-dialog").hidden=true;
+ $("preview-image").removeAttribute("src");
+ if(previewBlobUrl){URL.revokeObjectURL(previewBlobUrl);previewBlobUrl=null;}
+ previewFocus?.focus();previewFocus=null;
+}
+async function openPreview(file,button){
+ if(!isPreviewableImage(file)||file.source==="gmail-visible")return;
+ closePreview();
+ previewFocus=button;
+ const dialog=$("preview-dialog"),image=$("preview-image"),error=$("preview-error");
+ $("preview-title").textContent=file.name;
+ error.hidden=true;image.hidden=false;dialog.hidden=false;
+ image.onerror=()=>{image.hidden=true;error.hidden=false;};
+ $("preview-close").focus();
+ try{
+  let src=file.url;
+  if(file.source==="gmail"){
+   const bytes=await readGmailAttachment(file);
+   src=URL.createObjectURL(new Blob([bytes],{type:file.mimeType||"application/octet-stream"}));
+   if(dialog.hidden){URL.revokeObjectURL(src);return;}
+   previewBlobUrl=src;
+  }
+  if(!src)throw Error("No preview URL");
+  image.src=src;
+ }catch{image.hidden=true;error.hidden=false;}
+}
+$("preview-close").addEventListener("click",closePreview);
+$("preview-dialog").addEventListener("click",event=>{if(event.target===$("preview-dialog"))closePreview();});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("preview-dialog").hidden)closePreview();});
 function notice(msg){$("status").textContent=msg;$("scan-feedback").textContent=msg;}
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
@@ -37,11 +70,15 @@ function filtered(){
  });
 }
 function updateCount(){
- $("selected").textContent=state.selected.size+" selected";
- $("download").disabled=!state.selected.size||!state.access||state.busy;
+ const count=state.selected.size,available=!state.busy&&state.access;
+ $("selected").textContent=count+" selected";
+ $("download").disabled=!count||!available;
+ $("download").textContent=count>1&&state.source!=="gmail-visible"?"Download ZIP ("+count+")":
+   state.source==="gmail-visible"&&count>1?"Download to folder":"Download files";
  $("download-zip").hidden=state.source==="gmail-visible";
- $("download").textContent=state.source==="gmail-visible"?"Download selected":"Download files";
- $("download-zip").disabled=!state.selected.size||!state.access||state.busy||state.source==="gmail-visible";
+ $("download-zip").disabled=!count||!available||state.source==="gmail-visible";
+ $("clear-selection").disabled=!count||state.busy;
+ $("select-all").disabled=!filtered().length||state.busy;
 }
 function render(){
  const shown=filtered(),target=$("results");target.replaceChildren();
@@ -50,23 +87,41 @@ function render(){
   empty.textContent=isEmail({source:state.source})?"No visible attachments found in the open message.":"No matching files or substantive images.";
   target.append(empty);
  }
- for(const f of shown){
-  const row=document.createElement("label");row.className="file";
+ for(const [index,f] of shown.entries()){
+  const row=document.createElement("div");row.className="file";
   row.title=isEmail(f)?(f.subject||f.name):f.url;
-  const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=state.selected.has(fileKey(f));
+  const checkbox=document.createElement("input");
+  checkbox.type="checkbox";checkbox.id="file-check-"+index;
+  checkbox.setAttribute("aria-label","Select "+f.name);
+  checkbox.checked=state.selected.has(fileKey(f));
   checkbox.addEventListener("change",()=>{
    checkbox.checked?state.selected.add(fileKey(f)):state.selected.delete(fileKey(f));updateCount();
   });
-  const symbol=document.createElement("span");symbol.className="file-icon";
-  symbol.textContent=isEmail(f)?"📎":typeOf(f)==="image"?"▧":typeOf(f)==="pdf"?"▤":"↓";
-  const meta=document.createElement("span");meta.className="file-meta";
-  const title=document.createElement("div");title.className="file-name";title.textContent=f.name;
-  const desc=document.createElement("div");desc.className="file-sub";
+  const meta=document.createElement("label");meta.className="file-meta";meta.htmlFor=checkbox.id;
+  const title=document.createElement("span");title.className="file-name";title.textContent=f.name;
+  const desc=document.createElement("span");desc.className="file-sub";
   desc.textContent=isEmail(f)?(f.subject||"(No subject)")+" · "+(f.source==="gmail-visible"?"Native Gmail download":f.size?Math.ceil(f.size/1024)+" KB":"Gmail"):(new URL(f.url).hostname+" · "+typeOf(f).toUpperCase());
-  meta.append(title,desc);row.append(checkbox,symbol,meta);target.append(row);
+  meta.append(title,desc);
+  if(isPreviewableImage(f)&&f.source!=="gmail-visible"){
+   const trigger=document.createElement("button");trigger.type="button";trigger.className="preview-trigger";
+   trigger.title="Preview "+f.name;trigger.setAttribute("aria-label","Preview "+f.name);
+   const image=document.createElement("img");image.className="file-thumb";
+   image.alt="";image.loading="lazy";image.decoding="async";image.referrerPolicy="no-referrer";
+   const fallback=document.createElement("span");fallback.className="preview-fallback";fallback.textContent="▧";
+   fallback.hidden=!!f.url;image.hidden=!f.url;
+   image.addEventListener("error",()=>{image.hidden=true;fallback.hidden=false;});
+   if(f.url)image.src=f.url;
+   trigger.append(image,fallback);
+   trigger.addEventListener("click",()=>openPreview(f,trigger));
+   row.append(checkbox,trigger,meta);
+  }else{
+   const symbol=document.createElement("span");symbol.className="file-icon";
+   symbol.textContent=isEmail(f)?"📎":typeOf(f)==="pdf"?"▤":"↓";
+   row.append(checkbox,symbol,meta);
+  }
+  target.append(row);
  }
  $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
- $("select-all").disabled=shown.length===0;
  updateCount();
 }
 function showFiles(files,source){
@@ -214,10 +269,10 @@ $("scan").addEventListener("click",async()=>{
 $("search").addEventListener("input",render);
 $("type").addEventListener("change",render);
 $("select-all").addEventListener("click",()=>{
- const shown=filtered(),all=shown.every(f=>state.selected.has(fileKey(f)));
- for(const f of shown)all?state.selected.delete(fileKey(f)):state.selected.add(fileKey(f));
+ for(const f of filtered())state.selected.add(fileKey(f));
  render();
 });
+$("clear-selection").addEventListener("click",()=>{state.selected.clear();render();});
 function selectedFiles(){return state.files.filter(f=>state.selected.has(fileKey(f)));}
 function safeName(name){
  return String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").slice(0,150)||"file";
@@ -237,6 +292,12 @@ $("download").addEventListener("click",async()=>{
  const files=selectedFiles();if(!files.length)return;
  state.busy=true;updateCount();
  try{
+  if(files.length>1&&state.source!=="gmail-visible"){
+   await requestZipPermissions(files);
+   await mustHaveLicense();
+   await downloadZipFiles(files);
+   return;
+  }
   await mustHaveLicense();
 
   if(state.source==="gmail-visible"){
@@ -296,36 +357,42 @@ $("download").addEventListener("click",async()=>{
  }catch(e){notice("Download failed: "+e.message);}
  finally{state.busy=false;updateCount();}
 });
-$("download-zip").addEventListener("click",async()=>{
- const files=selectedFiles();
- if(!files.length)return;
- if(state.source==="gmail-visible"){notice("ZIP of Gmail attachments requires Google OAuth. Use Download files for this open message.");return;}
- if(files.length>150){notice("ZIP supports up to 150 files.");return;}
- if(state.source!=="gmail"){
-  const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
-  try{if(!await chrome.permissions.request({origins}))throw Error("Site permission denied");}
-  catch(e){notice("ZIP permissions: "+e.message);return;}
+async function requestZipPermissions(files){
+ if(state.source==="gmail")return;
+ if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
+ const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
+ if(origins.length&&!(await chrome.permissions.request({origins})))
+  throw Error("Site access denied. Allow access to the file hosts to build a ZIP.");
+}
+async function downloadZipFiles(files){
+ if(!files.length)throw Error("Select at least one file.");
+ if(files.length>150)throw Error("ZIP supports up to 150 files.");
+ if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
+ const entries=[];let total=0;
+ for(const f of files){
+  notice("Adding to ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
+  if(total+(f.size||0)>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
+  let bytes;
+  if(state.source==="gmail")bytes=await readGmailAttachment(f);
+  else{
+   const response=await fetch(f.url,{credentials:"include"});
+   if(!response.ok)throw Error("HTTP "+response.status+" for "+f.name);
+   bytes=new Uint8Array(await response.arrayBuffer());
+  }
+  total+=bytes.byteLength;
+  if(total>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
+  entries.push({name:f.name,bytes});
  }
+ await saveBlob(makeZip(entries),batchFolder()+"/files.zip",false);
+ notice("One ZIP archive downloaded with "+entries.length+" file(s).");
+}
+$("download-zip").addEventListener("click",async()=>{
+ const files=selectedFiles();if(!files.length)return;
  state.busy=true;updateCount();
  try{
+  await requestZipPermissions(files);
   await mustHaveLicense();
-  const entries=[];let total=0;
-  for(const f of files){
-   notice("Preparing ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
-   if(total+(f.size||0)>SIZE_LIMIT)throw Error("ZIP exceeds 100 MB limit.");
-   let bytes;
-   if(state.source==="gmail")bytes=await readGmailAttachment(f);
-   else{
-    const r=await fetch(f.url,{credentials:"include"});
-    if(!r.ok)throw Error("HTTP "+r.status+" for "+f.name);
-    bytes=new Uint8Array(await r.arrayBuffer());
-   }
-   total+=bytes.byteLength;
-   if(total>SIZE_LIMIT)throw Error("ZIP exceeds 100 MB limit.");
-   entries.push({name:f.name,bytes});
-  }
-  await saveBlob(makeZip(entries),batchFolder()+"/files.zip",true);
-  notice("ZIP ready: "+entries.length+" files.");
+  await downloadZipFiles(files);
  }catch(e){notice("ZIP failed: "+e.message);}
  finally{state.busy=false;updateCount();}
 });

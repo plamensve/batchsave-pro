@@ -52,3 +52,23 @@ test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
  assert.match(js,/Signed in/);
 });
+
+test("selection actions appear above scanned items, without a duplicate ZIP control",()=>{
+ const controls=html.indexOf('class="selection-actions"'),results=html.indexOf('id="results"');
+ assert.ok(controls>0&&controls<results);
+ for(const id of ["select-all","clear-selection","download-zip","preview-dialog","preview-image","preview-close"])
+  assert.equal([...html.matchAll(new RegExp('id="'+id+'"',"g"))].length,1);
+});
+test("scanned images use thumbnails and a large preview with load-error fallback",()=>{
+ assert.match(js,/preview-trigger/);
+ assert.match(js,/file-thumb/);
+ assert.match(js,/openPreview\(f,trigger\)/);
+ assert.match(js,/image\.addEventListener\("error"/);
+ assert.match(css,/\.preview-dialog/);
+});
+test("multiple selected page and Gmail API files are routed to a single ZIP",()=>{
+ assert.match(js,/if\(files\.length>1&&state\.source!=="gmail-visible"\)\{/);
+ assert.match(js,/await downloadZipFiles\(files\);\s*return;/);
+ assert.match(js,/await saveBlob\(makeZip\(entries\),batchFolder\(\)\+"\/files\.zip",false\)/);
+ assert.match(js,/chrome\.permissions\.request\(\{origins\}\)/);
+});

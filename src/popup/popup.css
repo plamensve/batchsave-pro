@@ -73,3 +73,25 @@ html,body{width:490px;min-width:490px;height:600px;min-height:600px;max-height:6
 footer{padding:4px 12px 5px;flex:0 0 auto}
 footer .notice{font-size:10px;max-height:24px;overflow:auto;padding:0 0 3px}
 footer .download-actions button{padding:6px;font-size:10px}
+
+/* Selection controls are positioned directly above the result list. */
+.selection-actions{display:flex;gap:7px;padding:0 12px 6px;flex:0 0 auto}
+.selection-actions .mini-select{padding:6px 9px;font-size:10px;white-space:nowrap}
+.selection-actions .zip-action{margin-left:auto;background:#e7f2ed;border-color:#b7dccd;color:#16634e}
+.selection-actions .zip-action:not(:disabled):hover{background:#d3eae0}
+.selection-actions button:focus-visible,.preview-trigger:focus-visible,.preview-heading button:focus-visible{outline:2px solid #3265e6;outline-offset:2px}
+.file{gap:9px;padding:7px 9px;min-height:55px}
+.file .file-meta{cursor:pointer;display:block}
+.file-name,.file-sub{display:block}
+.preview-trigger{width:44px;height:44px;flex:0 0 44px;border:1px solid #e4ebf5;border-radius:8px;background:#eef4ff;padding:0;display:grid;place-items:center;overflow:hidden}
+.preview-trigger:hover{border-color:#769fec}
+.file-thumb{display:block;width:100%;height:100%;object-fit:cover}
+.preview-fallback{font-size:20px;color:#4773c8}
+.preview-dialog{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(14,27,47,.68);padding:12px}
+.preview-card{width:100%;max-height:100%;display:flex;flex-direction:column;min-height:0;border-radius:12px;background:#fff;box-shadow:0 12px 40px #0004;overflow:hidden}
+.preview-heading{padding:9px 12px;display:flex;gap:10px;justify-content:space-between;align-items:center;border-bottom:1px solid #e2eaf6}
+.preview-heading strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-heading button{flex:0 0 auto;background:#edf3fd;color:#23456c;padding:6px 10px;font-size:14px}
+.preview-body{display:flex;align-items:center;justify-content:center;min-height:130px;overflow:auto;padding:12px;background:#f3f6fa}
+.preview-body img{display:block;max-width:100%;max-height:475px;width:auto;height:auto;object-fit:contain}
+.preview-body p{font-size:12px;color:#9b2424;text-align:center}
