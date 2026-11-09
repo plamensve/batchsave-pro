@@ -108,8 +108,6 @@ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("preview
 function notice(msg){
  const status=$("status"),text=status.querySelector(".notice-text");
  if(text)text.textContent=msg;else status.textContent=msg;
- const scan=$("scan-feedback"),scanText=scan.querySelector(".scan-feedback-text");
- if(scanText)scanText.textContent=msg;else scan.textContent=msg;
 }
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
@@ -208,6 +206,7 @@ function updateCount(){
  $("download-zip").disabled=!available||zipCount<2;
  if(zipLabel)zipLabel.textContent=count?"Download ZIP ("+count+")":visible>=2?"ZIP all visible ("+visible+")":"Download ZIP";
  $("clear-selection").disabled=!count||state.busy;
+ $("clear-results").disabled=!state.files.length||state.busy;
  $("select-all").disabled=!visible||state.busy;
 }
 function render(){
@@ -496,6 +495,19 @@ $("select-all").addEventListener("click",()=>{
  render();queuePersistScanState();
 });
 $("clear-selection").addEventListener("click",()=>{state.selected.clear();render();queuePersistScanState();});
+$("clear-results").addEventListener("click",async()=>{
+ if(state.busy)return;
+ state.files=[];
+ state.selected.clear();
+ state.source="page";
+ state.scanTabId=null;
+ state.scanTabUrl="";
+ $("search").value="";$("search").disabled=true;
+ $("type").value="relevant";$("type").disabled=true;
+ await chrome.storage.session.remove(SCAN_STATE_KEY);
+ render();
+ notice("Scanned results cleared.");
+});
 function selectedFiles(){return state.files.filter(f=>state.selected.has(fileKey(f)));}
 function safeName(name){
  return String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").slice(0,150)||"file";
