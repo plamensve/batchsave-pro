@@ -292,7 +292,10 @@ async function refreshAccount(){
  try{
   s=await session();
  }catch(e){
-  state.access=false;message("Connection issue. Your login is saved; refresh when online.");
+  state.access=false;
+  root.classList.add("signed-out");
+  $("auth-form").hidden=false;
+  authFeedback("Connection issue. Your saved login could not be verified. Try again when online.","error");
   updateCount();return;
  }
  if(!s){
