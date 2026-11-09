@@ -175,13 +175,15 @@
    </div>
 
    <div id="pdf-images-panel" class="pdf-operation-panel">
-    <label class="pdf-drop-zone" id="pdf-image-drop">
-     <input id="pdf-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple hidden>
-     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M12 11v6M9 14h6"/></svg>
-     <strong>Add images</strong>
-     <span>JPG, PNG, WebP, GIF or BMP · processed locally</span>
-    </label>
-    <div id="pdf-image-list" class="pdf-file-list"></div>
+    <div id="pdf-image-workspace" class="pdf-upload-workspace">
+     <label class="pdf-drop-zone" id="pdf-image-drop">
+      <input id="pdf-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple hidden>
+      <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M12 11v6M9 14h6"/></svg>
+      <strong>Add images</strong>
+      <span>JPG, PNG, WebP, GIF or BMP · processed locally</span>
+     </label>
+     <div id="pdf-image-list" class="pdf-file-list"></div>
+    </div>
     <div class="pdf-options">
      <label>DPI<select id="pdf-image-dpi"><option>96</option><option selected>150</option><option>200</option><option>300</option></select></label>
      <label>Quality<select id="pdf-image-quality"><option>70</option><option>80</option><option selected>88</option><option>95</option></select></label>
@@ -191,13 +193,15 @@
    </div>
 
    <div id="pdf-merge-panel" class="pdf-operation-panel" hidden>
-    <label class="pdf-drop-zone" id="pdf-merge-drop">
-     <input id="pdf-merge-input" type="file" accept="application/pdf,.pdf" multiple hidden>
-     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
-     <strong>Add PDF documents</strong>
-     <span>Files are merged in the order shown below</span>
-    </label>
-    <div id="pdf-merge-list" class="pdf-file-list"></div>
+    <div id="pdf-merge-workspace" class="pdf-upload-workspace">
+     <label class="pdf-drop-zone" id="pdf-merge-drop">
+      <input id="pdf-merge-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+      <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+      <strong>Add PDF documents</strong>
+      <span>Files are merged in the order shown below</span>
+     </label>
+     <div id="pdf-merge-list" class="pdf-file-list"></div>
+    </div>
     <div class="pdf-options pdf-options-end">
      <button id="pdf-merge-create" class="primary pdf-run" type="button" disabled>Merge and download</button>
     </div>
@@ -205,13 +209,15 @@
    </div>
 
    <div id="pdf-compress-panel" class="pdf-operation-panel" hidden>
-    <label class="pdf-drop-zone" id="pdf-compress-drop">
-     <input id="pdf-compress-input" type="file" accept="application/pdf,.pdf" hidden>
-     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 14h8M10 11l2 3 2-3M10 17l2-3 2 3"/></svg>
-     <strong>Select a PDF</strong>
-     <span>Lossless structural optimization · original remains unchanged</span>
-    </label>
-    <div id="pdf-compress-file" class="pdf-file-list"></div>
+    <div id="pdf-compress-workspace" class="pdf-upload-workspace">
+     <label class="pdf-drop-zone" id="pdf-compress-drop">
+      <input id="pdf-compress-input" type="file" accept="application/pdf,.pdf" hidden>
+      <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 14h8M10 11l2 3 2-3M10 17l2-3 2 3"/></svg>
+      <strong>Select a PDF</strong>
+      <span>Lossless structural optimization · original remains unchanged</span>
+     </label>
+     <div id="pdf-compress-file" class="pdf-file-list"></div>
+    </div>
     <div class="pdf-options pdf-options-end">
      <button id="pdf-compress-create" class="primary pdf-run" type="button" disabled>Optimize and download</button>
     </div>
