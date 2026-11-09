@@ -295,3 +295,10 @@ test("signed-out login offers password visibility without adding another auth ac
  assert.match(css,/\.password-toggle/);
  assert.match(js,/Hide password/);
 });
+
+test("signup messaging handles both new and already-registered email addresses",()=>{
+ assert.match(js,/Registration request processed/);
+ assert.match(js,/If this email is new/);
+ assert.match(js,/may already be registered/);
+ assert.match(js,/use Sign in or Send reset email instead/);
+});
