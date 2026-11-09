@@ -86,11 +86,11 @@ test("password reset UI cannot leave the stale password in the field",()=>{
  assert.match(js,/Password updated successfully/);
 });
 test("multi-select primary download exits through ZIP before any individual-download route",()=>{
- const multi=js.indexOf('if(files.length>1&&state.source!=="gmail-visible")');
- const zip=js.indexOf("await downloadZipFiles(files);",multi);
+ const plan=js.indexOf('if(plan.mode==="zip")');
+ const zip=js.indexOf("await downloadZipFiles(files);",plan);
  const exit=js.indexOf("return;",zip);
- const batch=js.indexOf('type:"BATCH_DOWNLOAD"',multi);
- assert.ok(multi>=0&&zip>multi&&exit>zip&&batch>exit);
+ const batch=js.indexOf('type:"BATCH_DOWNLOAD"',plan);
+ assert.ok(plan>=0&&zip>plan&&exit>zip&&batch>exit);
 });
 
 test("password field blocks stale autofill and clears invalid credentials",()=>{
