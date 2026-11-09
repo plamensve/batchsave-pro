@@ -1,6 +1,6 @@
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
-import {batchFolder} from "../lib/download-batch.js";
+import {batchFolder,batchArchiveName} from "../lib/download-batch.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signIn,signOut,session,accountUser,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
@@ -383,8 +383,9 @@ async function downloadZipFiles(files){
   if(total>SIZE_LIMIT)throw Error("ZIP exceeds the 100 MB limit.");
   entries.push({name:f.name,bytes});
  }
- await saveBlob(makeZip(entries),batchFolder()+"/files.zip",false);
- notice("One ZIP archive downloaded with "+entries.length+" file(s).");
+ const archiveName=batchArchiveName();
+ await saveBlob(makeZip(entries),archiveName,false);
+ notice("Downloaded one ZIP archive: "+archiveName+" · "+entries.length+" file(s).");
 }
 $("download-zip").addEventListener("click",async()=>{
  const files=selectedFiles();if(!files.length)return;
