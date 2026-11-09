@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BatchSave Pro — Bulk File Downloader",
-  "version": "0.9.9",
+  "version": "0.10.0",
   "description": "Download real page files, photos and Gmail email attachments in batches.",
   "permissions": [
     "activeTab",

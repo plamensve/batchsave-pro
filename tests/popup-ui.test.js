@@ -153,7 +153,7 @@ test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP even
  assert.match(js,/requestPasswordReset\(email\)/);
 });
 
-test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
+test("popup uses real SVG icons and the wider results workspace",()=>{
  assert.match(html,/class="ui-icon"/);
  assert.match(html,/class="status-svg"/);
  assert.match(html,/class="empty-svg"/);
@@ -161,18 +161,18 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
  assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
- assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
 });
 
-test("last scan is restored from session storage and full workspace can reopen it",()=>{
+test("last scan is restored from session storage without a separate workspace launcher",()=>{
  assert.match(js,/SCAN_STATE_KEY/);
  assert.match(js,/makeScanSnapshot/);
  assert.match(js,/restoreScanState\(\)/);
  assert.match(js,/chrome\.storage\.session\.set/);
- assert.match(js,/chrome\.windows\.create/);
- assert.match(css,/html\.full-workspace/);
+ assert.ok(!html.includes('id="open-workspace"'));
+ assert.ok(!js.includes("chrome.windows.create"));
+ assert.ok(!css.includes("full-workspace"));
 });
 test("ZIP button can archive all visible files without manual selection",()=>{
  assert.match(js,/const files=selectedFiles\(\)\.length\?selectedFiles\(\):filtered\(\)/);
@@ -195,8 +195,8 @@ test("account and billing actions appear before scan/download actions",()=>{
 test("premium header uses dark navy treatment with a gold accent",()=>{
  assert.match(css,/linear-gradient\(118deg,#071b3d/);
  assert.match(css,/border-bottom:3px solid #f4b000/);
- assert.match(css,/\.workspace-button/);
- assert.match(css,/color:#eef6ff/);
+ assert.match(css,/\.header-signout/);
+ assert.match(css,/color:#ffdbe1/);
 });
 
 test("password field can be re-unlocked after reset or failed login",()=>{
@@ -209,13 +209,15 @@ test("password field can be re-unlocked after reset or failed login",()=>{
  assert.match(js,/lockPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
 });
 
-test("billing actions are visually differentiated by purpose",()=>{
+test("sign out lives only in the header while billing CTA remains in the account card",()=>{
+ assert.match(html,/id="logout" class="header-signout"/);
+ assert.equal([...html.matchAll(/id="logout"/g)].length,1);
+ assert.ok(!html.includes("session-action"));
  assert.match(html,/class="primary subscription-action"/);
- assert.match(html,/class="secondary logout-button session-action"/);
  assert.match(html,/class="upgrade-label"/);
- assert.match(css,/\.billing-actions \.subscription-action/);
- assert.match(css,/\.billing-actions \.session-action/);
- assert.match(css,/color:#8c3443/);
+ assert.match(css,/\.header-signout/);
+ assert.match(js,/\$\("logout"\)\.hidden=true/);
+ assert.match(js,/\$\("logout"\)\.hidden=false/);
 });
 
 test("inline scan feedback field is removed to expand results workspace",()=>{
@@ -234,4 +236,11 @@ test("Clear results deletes current results and persisted scan session",()=>{
 test("results workspace receives the reclaimed vertical area",()=>{
  assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0/);
  assert.match(css,/\.selection-actions\{display:flex;align-items:center;gap:7px;padding:0 12px 5px/);
+});
+
+test("Workspace control is removed and replaced by a header logout icon",()=>{
+ assert.ok(!html.includes("Workspace"));
+ assert.ok(!html.includes('id="open-workspace"'));
+ assert.match(html,/id="logout" class="header-signout"/);
+ assert.match(html,/aria-label="Sign out"/);
 });

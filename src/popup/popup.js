@@ -10,15 +10,6 @@ import {requestPasswordReset} from "../services/auth-recovery.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
-const fullWorkspace=new URLSearchParams(location.search).get("full")==="1";
-document.documentElement.classList.toggle("full-workspace",fullWorkspace);
-$("open-workspace").hidden=fullWorkspace;
-$("open-workspace").addEventListener("click",async()=>{
- await chrome.windows.create({
-  url:chrome.runtime.getURL("src/popup/index.html?full=1"),
-  type:"popup",focused:true,width:780,height:840
- });
-});
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
@@ -177,11 +168,7 @@ async function restoreScanState(){
  const snapshot=stored[SCAN_STATE_KEY];
  if(!snapshot)return false;
  let tab=null;
- if(fullWorkspace&&snapshot.source==="gmail-visible"&&Number.isInteger(snapshot.tabId)){
-  try{tab=await chrome.tabs.get(snapshot.tabId);}catch{}
- }else{
-  try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
- }
+ try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
  if(!canRestoreScanSnapshot(snapshot,{tabId:tab?.id??null,tabUrl:tab?.url||""}))return false;
  state.files=snapshot.files;
  state.source=snapshot.source;
@@ -293,7 +280,7 @@ function displayProfile(user,plan){
  $("account-details").hidden=false;
 }
 async function refreshAccount(){
- $("auth-form").hidden=true;$("signup-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;
+ $("auth-form").hidden=true;$("signup-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;$("logout").hidden=true;
  let s;
  try{
   s=await session();
@@ -305,6 +292,7 @@ async function refreshAccount(){
   state.access=false;message("Sign in to manage downloads and your trial.");
   $("auth-form").hidden=false;updateCount();return;
  }
+ $("logout").hidden=false;
  const current=await accountUser().catch(()=>s.user||null);
  try{
   const info=await entitlement();
