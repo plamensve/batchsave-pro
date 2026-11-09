@@ -56,15 +56,19 @@ test("account identity and plan are clearly labeled",()=>{
 test("selection actions appear above scanned items, without a duplicate ZIP control",()=>{
  const controls=html.indexOf('class="selection-actions"'),results=html.indexOf('id="results"');
  assert.ok(controls>0&&controls<results);
- for(const id of ["select-all","clear-selection","download-zip","preview-dialog","preview-image","preview-close"])
+ for(const id of ["select-all","clear-selection","download-zip","preview-dialog","preview-image","preview-frame","preview-details","preview-close"])
   assert.equal([...html.matchAll(new RegExp('id="'+id+'"',"g"))].length,1);
 });
-test("scanned images use thumbnails and a large preview with load-error fallback",()=>{
+test("all scanned files expose preview controls; images and PDFs have rich preview modes",()=>{
  assert.match(js,/preview-trigger/);
  assert.match(js,/file-thumb/);
  assert.match(js,/openPreview\(f,trigger\)/);
+ assert.match(js,/isPreviewablePdf/);
+ assert.match(js,/\$\("preview-frame"\)/);
+ assert.match(js,/\$\("preview-details"\)/);
  assert.match(js,/image\.addEventListener\("error"/);
  assert.match(css,/\.preview-dialog/);
+ assert.match(css,/\.preview-details/);
 });
 test("multiple selected page and Gmail API files are routed to a single ZIP",()=>{
  assert.match(js,/if\(files\.length>1&&state\.source!=="gmail-visible"\)\{/);
@@ -72,4 +76,18 @@ test("multiple selected page and Gmail API files are routed to a single ZIP",()=
  assert.match(js,/const archiveName=batchArchiveName\(\)/);
  assert.match(js,/await saveBlob\(makeZip\(entries\),archiveName,false\)/);
  assert.match(js,/chrome\.permissions\.request\(\{origins\}\)/);
+});
+
+test("password reset UI cannot leave the stale password in the field",()=>{
+ assert.match(html,/id="auth-form" hidden autocomplete="off"/);
+ assert.match(html,/id="password"[^>]+autocomplete="off"/);
+ assert.match(js,/\$\("password"\)\.value=""/);
+ assert.match(js,/Password updated successfully/);
+});
+test("multi-select primary download exits through ZIP before any individual-download route",()=>{
+ const multi=js.indexOf('if(files.length>1&&state.source!=="gmail-visible")');
+ const zip=js.indexOf("await downloadZipFiles(files);",multi);
+ const exit=js.indexOf("return;",zip);
+ const batch=js.indexOf('type:"BATCH_DOWNLOAD"',multi);
+ assert.ok(multi>=0&&zip>multi&&exit>zip&&batch>exit);
 });

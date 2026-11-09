@@ -28,9 +28,12 @@ async function storeSession(auth){
 
 // Password login is deliberately isolated from registration and password recovery.
 export async function signIn(email,password){
+ const address=String(email||"").trim().toLowerCase();
+ const secret=String(password??"");
+ if(!address||!secret)throw Error("Email and password are required.");
  const response=await loginRequest("/auth/v1/token?grant_type=password",{
   method:"POST",
-  body:JSON.stringify({email,password})
+  body:JSON.stringify({email:address,password:secret})
  });
  const auth=stampSession(response);
  await storeSession(auth);
