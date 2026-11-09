@@ -27,12 +27,6 @@ export async function signUp(email,password){
  const redirect="https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/checkout-return?result=email-confirmed";
  return request("/auth/v1/signup?redirect_to="+encodeURIComponent(redirect),{method:"POST",body:JSON.stringify({email,password})});
 }
-export async function signIn(email,password){
- const response=await request("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
- const auth=stamped(response);
- await locked(()=>chrome.storage.local.set({[SESSION_KEY]:auth}));
- return auth;
-}
 export async function signOut(){await locked(()=>chrome.storage.local.remove(SESSION_KEY));}
 async function refreshStored(){
  const current=await stored();
@@ -90,8 +84,4 @@ export async function billingFunction(name){
  });
  if(!result.url||!result.url.startsWith("https://"))throw Error("Invalid payment URL");
  return result.url;
-}
-export async function requestPasswordReset(email){
- const redirect="https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/account-recovery";
- return request("/auth/v1/recover?redirect_to="+encodeURIComponent(redirect),{method:"POST",body:JSON.stringify({email})});
 }
