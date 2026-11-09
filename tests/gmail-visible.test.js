@@ -94,3 +94,19 @@ test("localized Bulgarian Gmail Download button is detected",async()=>{
    assert.equal(clicked,1);
  }finally{globalThis.document=saved;}
 });
+
+test("visible Gmail scanner captures direct attachment URL when download_url exposes one",()=>{
+ const old=globalThis.document;
+ const card={
+  isConnected:true,closest(){return this;},
+  getAttribute:key=>key==="download_url"?"application/pdf:invoice.pdf:https://mail-attachment.googleusercontent.com/attachment/u/0/?id=abc":null,
+  querySelector:()=>null,querySelectorAll:()=>[]
+ };
+ globalThis.document={querySelector:()=>({textContent:"Invoice"}),querySelectorAll:()=>[card]};
+ try{
+  const files=scanVisibleGmailAttachments();
+  assert.equal(files.length,1);
+  assert.equal(files[0].name,"invoice.pdf");
+  assert.match(files[0].url,/^https:\/\/mail-attachment\.googleusercontent\.com\//);
+ }finally{globalThis.document=old;}
+});
