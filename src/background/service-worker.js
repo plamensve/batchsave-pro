@@ -1,4 +1,4 @@
-import {entitlement} from "../services/auth.js";
+import {entitlement,acceptExternalSession} from "../services/auth.js";
 import {batchFolder,isBatchFolder,safeFileName,matchesGmailIntent} from "../lib/download-batch.js";
 
 const GMAIL_INTENT="gmailBatchIntent";
@@ -44,7 +44,7 @@ async function onMessage(message){
   const items=Array.isArray(message.items)?message.items.slice(0,3000):[];
   if(!items.length)return {ok:false,error:"No files selected"};
   const folder=batchFolder();
-  let started=0,failed=0;
+  let started=0,failed=0,errors=[];
   for(const item of items){
    try{
     const u=new URL(item.url);
@@ -54,14 +54,28 @@ async function onMessage(message){
      url:u.href,filename:folder+"/"+filename,conflictAction:"uniquify",saveAs:false
     });
     started++;
-   }catch{failed++;}
+   }catch(error){failed++;if(errors.length<3)errors.push(error.message||String(error));}
   }
-  return {ok:started>0,started,failed,folder,error:started?"":"No downloads could be started."};
+  return {ok:started>0,started,failed,folder,errors,error:started?"":errors[0]||"No downloads could be started."};
  }
  return {ok:false,error:"Unknown message"};
 }
 chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
  if(!["GET_GMAIL_FOLDER_STATE","CLEAR_GMAIL_FOLDER","PREPARE_GMAIL_DOWNLOAD","BATCH_DOWNLOAD"].includes(message?.type))return false;
  onMessage(message).then(sendResponse).catch(e=>sendResponse({ok:false,error:e.message}));
+ return true;
+});
+
+function trustedAuthSender(sender){
+ try{
+  const url=new URL(sender?.url||"");
+  return url.origin==="https://gcfyaaqqsqrjwujpymjz.supabase.co"&&url.pathname==="/functions/v1/checkout-return";
+ }catch{return false;}
+}
+chrome.runtime.onMessageExternal.addListener((message,sender,sendResponse)=>{
+ if(message?.type!=="BATCHSAVE_AUTH_SESSION"||!trustedAuthSender(sender))return false;
+ acceptExternalSession(message.session).then(session=>{
+  sendResponse({ok:true,email:session.user?.email||""});
+ }).catch(error=>sendResponse({ok:false,error:error.message}));
  return true;
 });
