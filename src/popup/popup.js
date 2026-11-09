@@ -54,7 +54,7 @@ async function openPreview(file,button){
  $("preview-title").textContent=file.name||"File preview";
  dialog.hidden=false;$("preview-close").focus();
  details.textContent=previewDetails(file);
- if(file.source==="gmail-visible"){
+ if(file.source==="gmail-visible"&&!file.url){
   details.hidden=false;return;
  }
  try{
