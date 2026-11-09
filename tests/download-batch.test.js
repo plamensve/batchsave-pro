@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {batchFolder,isBatchFolder,safeFileName,baseName,normalizedName,matchesGmailIntent} from "../src/lib/download-batch.js";
+import {batchFolder,batchArchiveName,isBatchFolder,safeFileName,baseName,normalizedName,matchesGmailIntent} from "../src/lib/download-batch.js";
 import {readFileSync} from "node:fs";
 
 const folder="BatchSave Pro/2026-11-09_08-04-05";
@@ -10,6 +10,7 @@ test("selected batch files share the same time-stamped download folder",()=>{
  assert.equal(isBatchFolder(folder),true);
  assert.equal(isBatchFolder("../../../private"),false);
  assert.equal(isBatchFolder("BatchSave Pro/../../other"),false);
+ assert.equal(batchArchiveName(d),"BatchSave-Pro-2026-11-09_08-04-05.zip");
 });
 test("file names are sanitized without stripping supported extensions",()=>{
  assert.equal(safeFileName("Invoice:2026.pdf"),"Invoice_2026.pdf");

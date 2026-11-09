@@ -8,6 +8,12 @@ export function batchFolder(date=new Date()){
 export function isBatchFolder(folder){
  return /^BatchSave Pro\/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/.test(folder||"");
 }
+export function batchArchiveName(date=new Date()){
+ const pad=x=>String(x).padStart(2,"0");
+ return "BatchSave-Pro-"+[
+  date.getFullYear(),pad(date.getMonth()+1),pad(date.getDate())
+ ].join("-")+"_"+[pad(date.getHours()),pad(date.getMinutes()),pad(date.getSeconds())].join("-")+".zip";
+}
 export function safeFileName(name){
  let value=String(name||"download").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_")
   .replace(/^\.+/,"").replace(/[. ]+$/g,"").slice(0,150);

@@ -32,16 +32,20 @@ jobs:
           from zipfile import ZipFile, ZIP_DEFLATED
           manifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))
           version = manifest['version']
-          name = f'BatchSave-Pro-v{version}.zip'
+          name = f'BatchSave-Pro-v{version}-One-Folder.zip'
+          root = 'BatchSave-Pro'
           Path('dist').mkdir(exist_ok=True)
           paths = [Path('manifest.json'), *sorted(p for p in Path('src').rglob('*') if p.is_file())]
           with ZipFile(Path('dist')/name, 'w', ZIP_DEFLATED, compresslevel=9) as z:
               for p in paths:
-                  z.write(p, str(p).replace('\\', '/'))
+                  rel = str(p).replace(chr(92), '/')
+                  arcname = f"{root}/{rel}"
+                  z.write(p, arcname)
           with ZipFile(Path('dist')/name) as z:
               assert z.testzip() is None
-              assert 'manifest.json' in z.namelist()
-              assert 'src/popup/index.html' in z.namelist()
+              assert f'{root}/manifest.json' in z.namelist()
+              assert f'{root}/src/popup/index.html' in z.namelist()
+              assert all(item.startswith(root + '/') for item in z.namelist())
               print(f'Packaged {name} ({len(z.namelist())} files)')
           with open('/tmp/zip-name', 'w') as f:
               f.write(name)
@@ -62,6 +66,6 @@ jobs:
           ZIP_NAME: ${{ steps.package.outputs.zip_name }}
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "BatchSave Pro $RELEASE_TAG" --notes "Chrome Web Store upload package. ZIP contains manifest.json at the archive root."
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "BatchSave Pro $RELEASE_TAG" --notes "One-folder Chrome unpacked package. Extract the ZIP, then choose the BatchSave-Pro folder with Load unpacked."
           fi
           gh release upload "$RELEASE_TAG" "dist/$ZIP_NAME" --clobber

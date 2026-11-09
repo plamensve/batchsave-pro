@@ -69,6 +69,7 @@ test("scanned images use thumbnails and a large preview with load-error fallback
 test("multiple selected page and Gmail API files are routed to a single ZIP",()=>{
  assert.match(js,/if\(files\.length>1&&state\.source!=="gmail-visible"\)\{/);
  assert.match(js,/await downloadZipFiles\(files\);\s*return;/);
- assert.match(js,/await saveBlob\(makeZip\(entries\),batchFolder\(\)\+"\/files\.zip",false\)/);
+ assert.match(js,/const archiveName=batchArchiveName\(\)/);
+ assert.match(js,/await saveBlob\(makeZip\(entries\),archiveName,false\)/);
  assert.match(js,/chrome\.permissions\.request\(\{origins\}\)/);
 });
