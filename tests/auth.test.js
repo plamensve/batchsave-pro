@@ -31,6 +31,14 @@ test("login posts password grant, retains valid session",async()=>{
  assert.match(seen.url,/\/auth\/v1\/token\?grant_type=password$/);
  assert.deepEqual(JSON.parse(seen.options.body),{email:"test@example.com",password:"secret123"});
 });
+test("login trims and normalizes only email while preserving password exactly",async()=>{
+ let body;
+ await withMock(async(_url,options)=>{
+  body=JSON.parse(options.body);
+  return new Response(JSON.stringify({access_token:"a",refresh_token:"r",expires_in:3600}),{status:200});
+ },async()=>{await signIn("  Test.User@Example.COM  ","  exact Password!  ");});
+ assert.deepEqual(body,{email:"test.user@example.com",password:"  exact Password!  "});
+});
 test("invalid credentials surface API error without storing fake session",async()=>{
  await withMock(async()=>new Response(JSON.stringify({error:"invalid_grant",error_description:"Invalid login credentials"}),{status:400}),async store=>{
   await assert.rejects(()=>signIn("wrong@example.com","incorrect"),/Invalid login credentials/);
