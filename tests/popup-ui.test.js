@@ -44,9 +44,9 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
 });
 
 test("main popup uses the available 600px height and a larger scrolling file list",()=>{
- assert.match(css,/width:490px/);
+ assert.match(css,/width:620px/);
  assert.match(css,/height:600px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 auto/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 auto;min-height:185px/);
 });
 test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
@@ -146,4 +146,16 @@ test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP even
  assert.match(js,/downloadZipFiles\(files\)/);
  assert.match(js,/mustHaveLicense\(\)/);
  assert.match(js,/requestPasswordReset\(email\)/);
+});
+
+test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
+ assert.match(html,/class="ui-icon"/);
+ assert.match(html,/class="status-svg"/);
+ assert.match(html,/class="empty-svg"/);
+ assert.match(js,/function vectorIcon\(/);
+ assert.match(js,/VECTOR_ICONS/);
+ assert.match(css,/width:620px/);
+ assert.match(css,/min-height:185px/);
+ for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
+  assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
 });
