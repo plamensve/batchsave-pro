@@ -109,7 +109,19 @@ function authFeedback(msg,kind="info"){
 const passwordInput=$("password");
 function clearPasswordInput(){
  passwordInput.value="";
+ passwordInput.type="password";
+ const toggle=$("toggle-password");
+ toggle.setAttribute("aria-label","Show password");
+ toggle.title="Show password";
 }
+$("toggle-password").addEventListener("click",()=>{
+ const showing=passwordInput.type==="text";
+ passwordInput.type=showing?"password":"text";
+ const label=showing?"Show password":"Hide password";
+ $("toggle-password").setAttribute("aria-label",label);
+ $("toggle-password").title=label;
+ passwordInput.focus();
+});
 
 function message(msg){
  const box=$("account-status"),text=box.querySelector(".account-status-text");
@@ -343,13 +355,10 @@ $("auth-form").addEventListener("submit",async ev=>{
   notice("Signed in successfully.");await refreshAccount();authFeedback("");
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
-  if(bad){
-   clearPasswordInput();
-   passwordInput.focus();
-  }
+  if(bad)passwordInput.focus();
   authFeedback(
    bad
-    ?"Supabase rejected that password. The password field was cleared. Re-enter the current password, or choose Send reset email and use the newest reset message."
+    ?"Email or password did not match. The password was kept in the field so you can verify it with the eye icon. If needed, use Send reset email."
     :`Sign in failed: ${e.message}`,
    "error"
   );
