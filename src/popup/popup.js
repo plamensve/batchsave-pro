@@ -13,34 +13,66 @@ const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
 const IMAGE_NAME_RE=/\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:$|[?#])/i;
+const PDF_NAME_RE=/\.pdf(?:$|[?#])/i;
 const isPreviewableImage=f=>typeOf(f)==="image"||f.mimeType?.startsWith("image/")||IMAGE_NAME_RE.test(f.name||"")||IMAGE_NAME_RE.test(f.url||"");
+const isPreviewablePdf=f=>typeOf(f)==="pdf"||f.mimeType==="application/pdf"||PDF_NAME_RE.test(f.name||"")||PDF_NAME_RE.test(f.url||"");
 let previewBlobUrl=null,previewFocus=null;
+function clearPreviewSource(){
+ const image=$("preview-image"),frame=$("preview-frame");
+ image.removeAttribute("src");frame.removeAttribute("src");
+ image.hidden=true;frame.hidden=true;$("preview-details").hidden=true;$("preview-error").hidden=true;
+ if(previewBlobUrl){URL.revokeObjectURL(previewBlobUrl);previewBlobUrl=null;}
+}
 function closePreview(){
  $("preview-dialog").hidden=true;
- $("preview-image").removeAttribute("src");
- if(previewBlobUrl){URL.revokeObjectURL(previewBlobUrl);previewBlobUrl=null;}
+ clearPreviewSource();
  previewFocus?.focus();previewFocus=null;
 }
+function previewDetails(file){
+ const parts=[file.name||"Unnamed file","Type: "+typeOf(file).toUpperCase()];
+ if(file.mimeType)parts.push("MIME: "+file.mimeType);
+ if(file.size)parts.push("Size: "+Math.ceil(file.size/1024)+" KB");
+ if(file.subject)parts.push("Email: "+file.subject);
+ if(file.url){
+  try{parts.push("Host: "+new URL(file.url).hostname);}catch{}
+ }
+ return parts.join("\n");
+}
+async function previewSource(file){
+ if(file.source==="gmail"){
+  const bytes=await readGmailAttachment(file);
+  const url=URL.createObjectURL(new Blob([bytes],{type:file.mimeType||"application/octet-stream"}));
+  previewBlobUrl=url;return url;
+ }
+ return file.url||"";
+}
 async function openPreview(file,button){
- if(!isPreviewableImage(file)||file.source==="gmail-visible")return;
  closePreview();
  previewFocus=button;
- const dialog=$("preview-dialog"),image=$("preview-image"),error=$("preview-error");
- $("preview-title").textContent=file.name;
- error.hidden=true;image.hidden=false;dialog.hidden=false;
- image.onerror=()=>{image.hidden=true;error.hidden=false;};
- $("preview-close").focus();
+ const dialog=$("preview-dialog"),image=$("preview-image"),frame=$("preview-frame"),details=$("preview-details"),error=$("preview-error");
+ $("preview-title").textContent=file.name||"File preview";
+ dialog.hidden=false;$("preview-close").focus();
+ details.textContent=previewDetails(file);
+ if(file.source==="gmail-visible"){
+  details.hidden=false;return;
+ }
  try{
-  let src=file.url;
-  if(file.source==="gmail"){
-   const bytes=await readGmailAttachment(file);
-   src=URL.createObjectURL(new Blob([bytes],{type:file.mimeType||"application/octet-stream"}));
-   if(dialog.hidden){URL.revokeObjectURL(src);return;}
-   previewBlobUrl=src;
+  if(isPreviewableImage(file)){
+   const src=await previewSource(file);
+   if(!src)throw Error("No preview source");
+   image.hidden=false;
+   image.onerror=()=>{image.hidden=true;details.hidden=false;error.hidden=false;};
+   image.src=src;return;
   }
-  if(!src)throw Error("No preview URL");
-  image.src=src;
- }catch{image.hidden=true;error.hidden=false;}
+  if(isPreviewablePdf(file)){
+   const src=await previewSource(file);
+   if(!src)throw Error("No preview source");
+   frame.hidden=false;frame.src=src;return;
+  }
+  details.hidden=false;
+ }catch{
+  details.hidden=false;error.hidden=false;
+ }
 }
 $("preview-close").addEventListener("click",closePreview);
 $("preview-dialog").addEventListener("click",event=>{if(event.target===$("preview-dialog"))closePreview();});
@@ -104,9 +136,11 @@ function render(){
   const desc=document.createElement("span");desc.className="file-sub";
   desc.textContent=isEmail(f)?(f.subject||"(No subject)")+" · "+(f.source==="gmail-visible"?"Native Gmail download":f.size?Math.ceil(f.size/1024)+" KB":"Gmail"):(new URL(f.url).hostname+" · "+typeOf(f).toUpperCase());
   meta.append(title,desc);
+
+  const trigger=document.createElement("button");
+  trigger.type="button";trigger.className="preview-trigger";
+  trigger.title="Preview "+f.name;trigger.setAttribute("aria-label","Preview "+f.name);
   if(isPreviewableImage(f)&&f.source!=="gmail-visible"){
-   const trigger=document.createElement("button");trigger.type="button";trigger.className="preview-trigger";
-   trigger.title="Preview "+f.name;trigger.setAttribute("aria-label","Preview "+f.name);
    const image=document.createElement("img");image.className="file-thumb";
    image.alt="";image.loading="lazy";image.decoding="async";image.referrerPolicy="no-referrer";
    const fallback=document.createElement("span");fallback.className="preview-fallback";fallback.textContent="▧";
@@ -114,13 +148,13 @@ function render(){
    image.addEventListener("error",()=>{image.hidden=true;fallback.hidden=false;});
    if(f.url)image.src=f.url;
    trigger.append(image,fallback);
-   trigger.addEventListener("click",()=>openPreview(f,trigger));
-   row.append(checkbox,trigger,meta);
   }else{
-   const symbol=document.createElement("span");symbol.className="file-icon";
-   symbol.textContent=isEmail(f)?"📎":typeOf(f)==="pdf"?"▤":"↓";
-   row.append(checkbox,symbol,meta);
+   const symbol=document.createElement("span");symbol.className="preview-fallback";
+   symbol.textContent=isPreviewablePdf(f)?"▤":isEmail(f)?"📎":"↓";
+   trigger.append(symbol);
   }
+  trigger.addEventListener("click",()=>openPreview(f,trigger));
+  row.append(checkbox,trigger,meta);
   target.append(row);
  }
  $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
@@ -202,7 +236,14 @@ $("reset-password").addEventListener("click",async()=>{
  const email=$("email").value.trim();
  if(!email){authFeedback("Enter the email address used to create your BatchSave account, then choose Send reset email.","error");$("email").focus();return;}
  $("reset-password").disabled=true;
- try{authFeedback("Requesting password reset email…");await chrome.storage.local.set({batchsaveLastEmail:email});await requestPasswordReset(email);authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the newest password reset email, choose a new password, then sign in.","success");notice("Password reset request accepted.");}
+ try{
+  authFeedback("Requesting password reset email…");
+  await chrome.storage.local.set({batchsaveLastEmail:email});
+  await requestPasswordReset(email);
+  $("password").value="";
+  authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the newest password reset email, choose a new password, wait for “Password updated successfully”, then return here and type the NEW password.","success");
+  notice("Password reset email sent. Use the newest message.");
+ }
  catch(e){authFeedback("Password reset request failed: "+e.message,"error");}
  finally{$("reset-password").disabled=false;}
 });
