@@ -2,23 +2,27 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 
-const source=readFileSync(new URL("../supabase/functions/account-recovery/index.ts",import.meta.url),"utf8");
+const redirect=readFileSync(new URL("../supabase/functions/account-recovery/index.ts",import.meta.url),"utf8");
+const page=readFileSync(new URL("../web/account-recovery.html",import.meta.url),"utf8");
 
-test("recovery page accepts the Supabase implicit recovery session and submits password update",()=>{
- assert.match(source,/location\.hash/);
- assert.match(source,/access_token/);
- assert.match(source,/type&&type!=="recovery"/);
- assert.match(source,/method:"PUT"/);
- assert.match(source,/\/auth\/v1\/user/);
- assert.match(source,/Authorization/);
- assert.match(source,/Password updated successfully/);
+test("Supabase recovery Edge Function redirects instead of serving unsupported HTML",()=>{
+ assert.match(redirect,/status:302/);
+ assert.match(redirect,/Location/);
+ assert.match(redirect,/plamensve\.github\.io\/DS_ML_DL_PORTFOLIO\/batchsave\/account-recovery\.html/);
+ assert.ok(!redirect.includes("text/html"));
+ assert.ok(!redirect.includes("<!doctype html>"));
 });
-test("recovery page requires matching passwords and reports expired links",()=>{
- assert.match(source,/next!==confirm\.value/);
- assert.match(source,/at least 8 characters/);
- assert.match(source,/expired or was already used/);
+test("static recovery page accepts the implicit recovery fragment and updates password",()=>{
+ assert.match(page,/location\.hash/);
+ assert.match(page,/access_token/);
+ assert.match(page,/type&&type!=="recovery"/);
+ assert.match(page,/method:"PUT"/);
+ assert.match(page,/\/auth\/v1\/user/);
+ assert.match(page,/Authorization/);
+ assert.match(page,/Password updated successfully/);
 });
-test("recovery HTML is explicitly served as text\/html with no-store caching",()=>{
- assert.match(source,/Content-Type","text\/html; charset=utf-8"/);
- assert.match(source,/Cache-Control","no-store, max-age=0"/);
+test("static recovery page validates password confirmation and expired links",()=>{
+ assert.match(page,/next!==confirm\.value/);
+ assert.match(page,/at least 8 characters/);
+ assert.match(page,/expired or was already used/);
 });
