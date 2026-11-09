@@ -79,9 +79,11 @@ test("multiple selected files are routed to a single ZIP through the download pl
  assert.match(js,/chrome\.permissions\.request\(\{origins\}\)/);
 });
 
-test("password reset UI cannot leave the stale password in the field",()=>{
+test("password reset clears the login password without making the login field readonly",()=>{
  assert.match(html,/id="auth-form" hidden autocomplete="off"/);
- assert.match(html,/id="password"[^>]+autocomplete="off"/);
+ assert.match(html,/id="password"[^>]+autocomplete="current-password"/);
+ assert.ok(!/id="password"[^>]+readonly/.test(html));
+ assert.match(js,/function clearPasswordInput\(\)/);
  assert.match(js,/passwordInput\.value=""/);
  assert.match(js,/Password updated successfully/);
 });
@@ -93,10 +95,12 @@ test("multi-select primary download exits through ZIP before any individual-down
  assert.ok(plan>=0&&zip>plan&&exit>zip&&batch>exit);
 });
 
-test("password field blocks stale autofill and clears invalid credentials",()=>{
- assert.match(html,/id="password"[^>]+readonly/);
- assert.match(js,/function unlockPasswordInput\(\)/);
- assert.match(js,/passwordInput\.value=""/);
+test("login password field uses standard current-password behavior and clears only after a failed login",()=>{
+ assert.match(html,/id="password"[^>]+autocomplete="current-password"/);
+ assert.ok(!html.match(/id="password"[^>]+readonly/));
+ assert.ok(!js.includes("unlockPasswordInput"));
+ assert.ok(!js.includes("passwordInput.readOnly"));
+ assert.match(js,/clearPasswordInput\(\);\n   passwordInput\.focus\(\)/);
  assert.match(js,/Supabase rejected that password/);
 });
 test("Create account opens a dedicated registration form instead of reusing login fields",()=>{
@@ -199,14 +203,12 @@ test("premium header uses dark navy treatment with a gold accent",()=>{
  assert.match(css,/color:#ffdbe1/);
 });
 
-test("password field can be re-unlocked after reset or failed login",()=>{
- assert.match(js,/function lockPasswordInput\(\)/);
- assert.match(js,/if\(!passwordInput\.readOnly\)return/);
- assert.match(js,/passwordInput\.addEventListener\("pointerdown",unlockPasswordInput\)/);
- assert.match(js,/passwordInput\.addEventListener\("focus",unlockPasswordInput\)/);
- assert.ok(!js.includes('{once:true}'));
- assert.match(js,/lockPasswordInput\(\);\n   passwordInput\.focus\(\)/);
- assert.match(js,/lockPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
+test("reset and failed login clear the password while keeping the field immediately editable",()=>{
+ assert.match(js,/function clearPasswordInput\(\)/);
+ assert.ok(!js.includes("readOnly"));
+ assert.ok(!js.includes("unlockPasswordInput"));
+ assert.match(js,/clearPasswordInput\(\);\n   passwordInput\.focus\(\)/);
+ assert.match(js,/clearPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
 });
 
 test("sign out lives only in the header while billing CTA remains in the account card",()=>{
@@ -276,4 +278,10 @@ test("signed-in identity and plan live inside the premium header",()=>{
 test("Settings button opens the registered Chrome options page",()=>{
  assert.match(js,/\$\("settings"\)\.addEventListener\("click",\(\)=>chrome\.runtime\.openOptionsPage\(\)\)/);
  assert.match(css,/\.header-settings/);
+});
+
+test("signed-out login view is intentionally taller than the old compact shell",()=>{
+ assert.match(css,/html\.signed-out,html\.signed-out body\{\n height:360px;/);
+ assert.match(css,/html\.signed-out \.auth-panel\{\n margin:18px 16px 0;/);
+ assert.match(css,/html\.signed-out \.auth-panel input\{\n height:40px;/);
 });
