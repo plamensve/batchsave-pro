@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {signUp,signOut,session,accountUser,updatePassword} from "../src/services/auth.js";
 import {signIn} from "../src/services/auth-login.js";
-import {requestPasswordReset,PASSWORD_RECOVERY_REDIRECT} from "../src/services/auth-recovery.js";
+import {requestPasswordReset,passwordResetCooldownSeconds,PASSWORD_RECOVERY_REDIRECT} from "../src/services/auth-recovery.js";
 import {readFileSync} from "node:fs";
 
 async function withMock(mockFetch,fn){
@@ -52,6 +52,32 @@ test("password recovery submits a valid email-only request",async()=>{
  const target=new URL(seen.url);
  assert.equal(target.searchParams.get("redirect_to"),PASSWORD_RECOVERY_REDIRECT);
  assert.deepEqual(JSON.parse(seen.options.body),{email:"test@example.com"});
+});
+
+test("password recovery enforces a local cooldown before another network request",async()=>{
+ let calls=0;
+ await withMock(async()=>{calls++;return new Response("{}",{status:200});},async()=>{
+  await requestPasswordReset("test@example.com");
+  assert.ok(await passwordResetCooldownSeconds()>0);
+  await assert.rejects(
+   ()=>requestPasswordReset("test@example.com"),
+   error=>error?.code==="local_recovery_cooldown"
+  );
+ });
+ assert.equal(calls,1);
+});
+
+test("password recovery preserves Supabase email quota error code and starts cooldown",async()=>{
+ await withMock(async()=>new Response(JSON.stringify({
+  error_code:"over_email_send_rate_limit",
+  message:"email rate limit exceeded"
+ }),{status:429,headers:{"content-type":"application/json"}}),async()=>{
+  await assert.rejects(
+   ()=>requestPasswordReset("test@example.com"),
+   error=>error?.code==="over_email_send_rate_limit"&&error?.status===429
+  );
+  assert.ok(await passwordResetCooldownSeconds()>0);
+ });
 });
 
 test("password recovery cannot modify or clear an existing login session",async()=>{
