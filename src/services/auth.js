@@ -8,7 +8,9 @@ async function request(path,options={}){
  const res=await fetch(SUPABASE_URL+path,{...options,headers:{...headers,...options.headers}});
  const payload=await res.json().catch(()=>({}));
  if(!res.ok){
-   const error=new Error(payload.msg||payload.error_description||payload.message||payload.error||"Request failed");
+   const baseMessage=payload.msg||payload.error_description||payload.message||payload.error||"Request failed";
+   const missing=Array.isArray(payload.missing)&&payload.missing.length?" · Missing: "+payload.missing.join(", "):"";
+   const error=new Error(baseMessage+missing);
    error.status=res.status;error.code=payload.error_code||payload.code||payload.error||"";
    throw error;
  }
