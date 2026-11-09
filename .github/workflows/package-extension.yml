@@ -1,0 +1,67 @@
+name: Package Chrome extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/package-extension.yml
+      - manifest.json
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate extension
+        run: |
+          npm run check
+          npm test
+      - name: Package distributable ZIP
+        id: package
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          manifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))
+          version = manifest['version']
+          name = f'BatchSave-Pro-v{version}.zip'
+          Path('dist').mkdir(exist_ok=True)
+          paths = [Path('manifest.json'), *sorted(p for p in Path('src').rglob('*') if p.is_file())]
+          with ZipFile(Path('dist')/name, 'w', ZIP_DEFLATED, compresslevel=9) as z:
+              for p in paths:
+                  z.write(p, str(p).replace('\\', '/'))
+          with ZipFile(Path('dist')/name) as z:
+              assert z.testzip() is None
+              assert 'manifest.json' in z.namelist()
+              assert 'src/popup/index.html' in z.namelist()
+              print(f'Packaged {name} ({len(z.namelist())} files)')
+          with open('/tmp/zip-name', 'w') as f:
+              f.write(name)
+          with open('/tmp/version', 'w') as f:
+              f.write(version)
+          PY
+          echo "zip_name=$(cat /tmp/zip-name)" >> "$GITHUB_OUTPUT"
+          echo "version=$(cat /tmp/version)" >> "$GITHUB_OUTPUT"
+      - name: Upload archive as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BatchSave-Pro-v${{ steps.package.outputs.version }}
+          path: dist/${{ steps.package.outputs.zip_name }}
+      - name: Publish directly downloadable release ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ steps.package.outputs.version }}
+          ZIP_NAME: ${{ steps.package.outputs.zip_name }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "BatchSave Pro $RELEASE_TAG" --notes "Chrome Web Store upload package. ZIP contains manifest.json at the archive root."
+          fi
+          gh release upload "$RELEASE_TAG" "dist/$ZIP_NAME" --clobber
