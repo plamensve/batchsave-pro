@@ -32,7 +32,7 @@ Existing confirmed users can sign in immediately without registering again.
 
 ## Reset password
 
-The main popup includes **Reset password**. Supabase sends a recovery email to the account's verified email address. Its link opens the deployed `account-recovery` Edge Function, where the user sets a new password; no password is sent to the browser extension until they sign in again.
+The main popup includes **Reset password**. Supabase sends a recovery email to the account's verified email address. Its link opens the `account-recovery` Edge Function, which performs a 302 redirect to the static BatchSave Pro recovery page at `https://plamensve.github.io/DS_ML_DL_PORTFOLIO/batchsave/account-recovery.html`. The recovery token stays in the browser URL fragment and the static page uses it to update the password; no password is sent to the browser extension until the user signs in again.
 
 Add the following exact address under **Authentication → URL Configuration → Redirect URLs**:
 
