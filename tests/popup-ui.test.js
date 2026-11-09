@@ -244,3 +244,17 @@ test("Workspace control is removed and replaced by a header logout icon",()=>{
  assert.match(html,/id="logout" class="header-signout"/);
  assert.match(html,/aria-label="Sign out"/);
 });
+
+test("paid and trial accounts use explicit BatchSave Pro plan labels",()=>{
+ assert.match(js,/subscriptionStatus==="active"\?"BatchSave Pro · Active"/);
+ assert.match(js,/subscriptionStatus==="trialing"\?"BatchSave Pro · Trial"/);
+ assert.match(js,/Signed in · BatchSave Pro active/);
+});
+test("active or trial subscriptions expose Manage subscription instead of checkout",()=>{
+ assert.match(html,/id="manage" class="secondary manage-subscription"/);
+ assert.match(html,/Manage subscription/);
+ assert.match(js,/const managedSubscription=\["active","trialing"\]\.includes\(subscriptionStatus\)/);
+ assert.match(js,/\$\("upgrade"\)\.hidden=!tester&&managedSubscription/);
+ assert.match(js,/\$\("manage"\)\.hidden=!managedSubscription/);
+ assert.match(css,/\.billing-actions \.manage-subscription/);
+});
