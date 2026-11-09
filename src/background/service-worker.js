@@ -2,6 +2,13 @@ import {entitlement} from "../services/auth.js";
 import {batchFolder,isBatchFolder,safeFileName,matchesGmailIntent} from "../lib/download-batch.js";
 
 const GMAIL_INTENT="gmailBatchIntent";
+let licenseCache=null;
+async function checkedEntitlement(){
+ if(licenseCache&&Date.now()<licenseCache.expiresAt)return licenseCache.value;
+ const value=await entitlement();
+ licenseCache={value,expiresAt:Date.now()+5000};
+ return value;
+}
 // A short-lived, narrowly scoped request. Never rename arbitrary browser downloads.
 chrome.downloads.onDeterminingFilename.addListener((item,suggest)=>{
  chrome.storage.session.get(GMAIL_INTENT).then(async state=>{
@@ -17,6 +24,10 @@ chrome.downloads.onDeterminingFilename.addListener((item,suggest)=>{
 });
 
 async function onMessage(message){
+ if(message?.type==="CHECK_LICENSE"){
+  const access=await checkedEntitlement();
+  return {ok:true,entitlement:access||null,access_granted:!!access?.access_granted};
+ }
  if(message?.type==="GET_GMAIL_FOLDER_STATE"){
   const state=await chrome.storage.session.get(GMAIL_INTENT);
   const intent=state[GMAIL_INTENT]||null;
@@ -27,7 +38,7 @@ async function onMessage(message){
   return {ok:true};
  }
  if(message?.type==="PREPARE_GMAIL_DOWNLOAD"){
-  const access=await entitlement();
+  const access=await checkedEntitlement();
   if(!access?.access_granted)return {ok:false,error:"No active license."};
   if(!isBatchFolder(message.folder))return {ok:false,error:"Invalid batch folder."};
   const expectedName=safeFileName(message.expectedName);
@@ -39,7 +50,7 @@ async function onMessage(message){
   return {ok:true};
  }
  if(message?.type==="BATCH_DOWNLOAD"){
-  const access=await entitlement();
+  const access=await checkedEntitlement();
   if(!access?.access_granted)return {ok:false,error:"Trial expired or no active subscription."};
   const items=Array.isArray(message.items)?message.items.slice(0,3000):[];
   if(!items.length)return {ok:false,error:"No files selected"};
@@ -61,7 +72,7 @@ async function onMessage(message){
  return {ok:false,error:"Unknown message"};
 }
 chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
- if(!["GET_GMAIL_FOLDER_STATE","CLEAR_GMAIL_FOLDER","PREPARE_GMAIL_DOWNLOAD","BATCH_DOWNLOAD"].includes(message?.type))return false;
+ if(!["CHECK_LICENSE","GET_GMAIL_FOLDER_STATE","CLEAR_GMAIL_FOLDER","PREPARE_GMAIL_DOWNLOAD","BATCH_DOWNLOAD"].includes(message?.type))return false;
  onMessage(message).then(sendResponse).catch(e=>sendResponse({ok:false,error:e.message}));
  return true;
 });
