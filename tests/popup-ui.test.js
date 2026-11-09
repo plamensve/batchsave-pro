@@ -271,7 +271,7 @@ test("signed-out popup exposes auth only and keeps downloader workspace hidden",
 });
 test("signed-in identity and plan live inside the premium header",()=>{
  const header=html.slice(html.indexOf('<header class="header">'),html.indexOf("</header>")+9);
- for(const id of ["header-account","account-avatar","account-name","account-email","account-status","account-license","settings","logout"])
+ for(const id of ["header-account","account-name","account-email","account-status","account-license","settings","logout"])
   assert.ok(header.includes('id="'+id+'"'),"missing header account control "+id);
  assert.match(js,/\$\("header-account"\)\.hidden=false/);
  assert.match(js,/\$\("settings"\)\.hidden=false/);
@@ -301,4 +301,36 @@ test("signup messaging handles both new and already-registered email addresses",
  assert.match(js,/If this email is new/);
  assert.match(js,/may already be registered/);
  assert.match(js,/use Sign in or Send reset email instead/);
+});
+
+test("signed-in header is flat and does not render a second account logo/card",()=>{
+ const header=html.slice(html.indexOf('<header class="header">'),html.indexOf("</header>")+9);
+ assert.ok(!header.includes('id="account-avatar"'));
+ assert.match(header,/class="header-account-inline"/);
+ assert.match(header,/class="account-info-inline"/);
+ assert.match(css,/\.header-account-inline\{/);
+ assert.match(css,/background:transparent/);
+ assert.match(css,/box-shadow:none/);
+});
+test("Downloads and PDF Tools are the two primary tabs directly below subscription actions",()=>{
+ const billing=html.indexOf('id="billing-actions"');
+ const tabs=html.indexOf('id="workspace-tabs"');
+ const downloads=html.indexOf('id="downloads-panel"');
+ const pdf=html.indexOf('id="pdf-tools-panel"');
+ assert.ok(billing>0&&tabs>billing&&downloads>tabs&&pdf>downloads);
+ assert.match(html,/id="downloads-tab"[^>]*data-panel="downloads-panel"/);
+ assert.match(html,/id="pdf-tools-tab"[^>]*data-panel="pdf-tools-panel"/);
+ assert.match(js,/function setWorkspaceTab\(panelId\)/);
+ assert.match(js,/batchsaveWorkspaceTab/);
+ assert.match(css,/\.workspace-tabs\{/);
+ assert.match(css,/\.workspace-tab\.active/);
+});
+test("PDF tools are embedded in the popup and use the local PDF engine",()=>{
+ assert.match(html,/\.\.\/vendor\/pdf-lib\.min\.js/);
+ for(const id of [
+  "pdf-images-mode","pdf-merge-mode","pdf-compress-mode",
+  "pdf-image-input","pdf-merge-input","pdf-compress-input",
+  "pdf-images-create","pdf-merge-create","pdf-compress-create"
+ ]) assert.ok(html.includes('id="'+id+'"'),"missing popup PDF control "+id);
+ assert.match(js,/initPopupPdfTools\(\{ensureAccess:mustHaveLicense\}\)/);
 });
