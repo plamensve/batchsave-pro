@@ -839,13 +839,13 @@ footer{
 }
 .auth-panel.session-active .auth-feedback{margin:0 0 6px}
 html.signed-out,html.signed-out body{
- height:255px;
- min-height:255px;
- max-height:255px;
+ height:360px;
+ min-height:360px;
+ max-height:360px;
 }
 html.signed-out .app{
- height:255px;
- max-height:255px;
+ height:360px;
+ max-height:360px;
 }
 html.signed-out.signup-open,html.signed-out.signup-open body,
 html.signup-open,html.signup-open body{
@@ -861,3 +861,21 @@ html.signed-out .auth-panel{
  margin-top:10px;
 }
 html.signed-out footer{display:none}
+
+html.signed-out .auth-panel{
+ margin:18px 16px 0;
+ padding:10px;
+ border-radius:15px;
+}
+html.signed-out .auth-panel form{
+ gap:9px;
+ margin-top:9px;
+}
+html.signed-out .auth-panel input{
+ height:40px;
+ font-size:11px;
+}
+html.signed-out .auth-actions button{
+ min-height:34px;
+ font-size:10px;
+}
