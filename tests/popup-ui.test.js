@@ -185,9 +185,13 @@ test("ZIP button can archive all visible files without manual selection",()=>{
  assert.match(js,/downloadNativeGmailZip/);
  assert.match(js,/downloadAllVisibleGmailAttachments/);
 });
-test("Stripe checkout shows an animated 3 2 1 launch state",()=>{
+test("Stripe checkout shows an animated 3 2 1 launch state and surfaces backend failures",()=>{
  assert.match(js,/for\(const n of \[3,2,1\]\)/);
  assert.match(js,/Opening Stripe · /);
+ assert.match(js,/Creating secure checkout/);
+ assert.match(js,/await billingFunction\("create-checkout"\)/);
+ assert.match(js,/Stripe checkout failed:/);
+ assert.match(js,/authFeedback\(msg,"error"\)/);
  assert.match(js,/billing-launching/);
  assert.match(css,/@keyframes billingSweep/);
 });
@@ -333,4 +337,13 @@ test("PDF tools are embedded in the popup and use the local PDF engine",()=>{
   "pdf-images-create","pdf-merge-create","pdf-compress-create"
  ]) assert.ok(html.includes('id="'+id+'"'),"missing popup PDF control "+id);
  assert.match(js,/initPopupPdfTools\(\{ensureAccess:mustHaveLicense\}\)/);
+});
+
+test("Stripe checkout backend self-heals a missing billing profile before creating the session",()=>{
+ const checkout=readFileSync(new URL("../supabase/functions/create-checkout/index.ts",import.meta.url),"utf8");
+ assert.match(checkout,/from\("profiles"\)\.upsert/);
+ assert.match(checkout,/ignoreDuplicates:true/);
+ assert.match(checkout,/stripe\.checkout\.sessions\.create/);
+ assert.match(checkout,/Stripe did not return a checkout URL/);
+ assert.ok(!checkout.includes('return json({error:"Account not ready"},409)'));
 });
