@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>BatchSave Pro</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#17233b;background:#f3f6fc}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 70% 0,#dceaff,transparent 35%),#f3f6fc}
+.card{width:min(470px,100%);background:#fff;border:1px solid #dce5f3;border-radius:18px;padding:28px;box-shadow:0 16px 44px #19396b20}
+.brand-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.logo{display:block;width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 7px 16px rgba(30,91,220,.22))}
+.brand{display:flex;flex-direction:column}.brand strong{font-size:17px}.brand span{font-size:10px;color:#718096}
+h1{font-size:24px;margin:0 0 10px;color:#10203d}
+p{font-size:14px;line-height:1.6;color:#52657f;margin:0}
+.status{margin-top:18px;padding:13px 14px;border-radius:11px;background:#eef4ff;border:1px solid #d4e2f8;color:#345477}
+.status.success{background:#effbf5;border-color:#a8dec8;color:#146b4d}
+.status.cancel{background:#fff8e8;border-color:#ecd59b;color:#805e14}
+</style>
+</head>
+<body>
+<main class="card">
+<div class="brand-row">
+<img class="logo" src="https://raw.githubusercontent.com/plamensve/batchsave-pro/main/src/assets/batchsave-logo-128.png" alt="BatchSave Pro">
+<div class="brand"><strong>BatchSave Pro</strong><span>Account & billing</span></div>
+</div>
+<h1 id="heading">BatchSave Pro</h1>
+<p id="copy">Checking status…</p>
+<div id="status" class="status">You can close this page after the action is complete.</div>
+</main>
+<script>
+(()=>{
+ const result=new URLSearchParams(location.search).get("result")||"";
+ const heading=document.getElementById("heading");
+ const copy=document.getElementById("copy");
+ const status=document.getElementById("status");
+ if(result==="email-confirmed"){
+  heading.textContent="Email confirmed";
+  copy.textContent="Your email address has been confirmed successfully.";
+  status.textContent="Return to the BatchSave Pro extension and sign in with your email and password.";
+  status.classList.add("success");
+ }else if(result==="success"){
+  heading.textContent="Subscription started";
+  copy.textContent="Your subscription checkout was completed.";
+  status.textContent="Return to BatchSave Pro. Your plan will update after Stripe synchronization finishes.";
+  status.classList.add("success");
+ }else if(result==="cancel"){
+  heading.textContent="Checkout canceled";
+  copy.textContent="No purchase was made.";
+  status.textContent="Return to BatchSave Pro whenever you are ready.";
+  status.classList.add("cancel");
+ }else{
+  heading.textContent="BatchSave Pro";
+  copy.textContent="The account action is complete.";
+  status.textContent="Return to the BatchSave Pro extension.";
+ }
+})();
+</script>
+</body>
+</html>
