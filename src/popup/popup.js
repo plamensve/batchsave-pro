@@ -370,16 +370,17 @@ for(const [id,fn] of [["upgrade","create-checkout"],["manage","billing-portal"]]
   catch(e){notice("Billing: "+e.message);}
  });
 }
-async function scanGmail(tabId){
+async function scanGmail(tab){
+ const tabId=tab.id;
  notice("Checking attachments in the open Gmail conversation…");
  const [{result:visible}]=await chrome.scripting.executeScript({target:{tabId},func:scanVisibleGmailAttachments});
  if(visible?.length){
-   showFiles(visible,"gmail-visible");
+   showFiles(visible,"gmail-visible",{tabId,tabUrl:tab.url||""});
    notice(visible.length+" attached file(s) found. Select 2+ files to create one ZIP when Gmail exposes direct attachment URLs.");
    return;
  }
  // Do not retain stale files from a previous Gmail conversation.
- showFiles([],"gmail-visible");
+ showFiles([],"gmail-visible",{tabId,tabUrl:tab.url||""});
  let diagnostic={cards:0,downloadDescriptors:0,namedNodes:0,filenameLabels:0};
  try{
   const [{result}]=await chrome.scripting.executeScript({target:{tabId},func:diagnoseVisibleGmailAttachments});
@@ -401,7 +402,7 @@ async function scanGmail(tabId){
   maxResults:35,
   onProgress:(done,total)=>notice("Scanning Gmail messages "+done+"/"+total+"…")
  });
- showFiles(response.files,"gmail");
+ showFiles(response.files,"gmail",{tabId,tabUrl:tab.url||""});
  notice(response.files.length+" Gmail attachments found in "+response.scannedMessages+" messages"+(response.nextPageToken?" (first page)":"")+".");
 }
 $("scan").addEventListener("click",async()=>{
@@ -412,24 +413,24 @@ $("scan").addEventListener("click",async()=>{
   const gmail=tab.url?.startsWith("https://mail.google.com/");
   $("gmail-controls").hidden=!gmail;
   if(gmail){
-   await scanGmail(tab.id);
+   await scanGmail(tab);
   }else{
    notice("Scanning the current page…");
    const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:collectFromPage});
    const files=(result||[]).map(f=>({...f,kind:classifyFile(f.url,f.kind),name:f.name||filenameFromUrl(f.url)}));
-   showFiles(files,"page");
+   showFiles(files,"page",{tabId:tab.id,tabUrl:tab.url||""});
    notice(filtered().length+" relevant files/photos detected.");
   }
  }catch(e){notice("Scan failed: "+e.message);}
  finally{button.disabled=false;state.busy=false;updateCount();}
 });
-$("search").addEventListener("input",render);
-$("type").addEventListener("change",render);
+$("search").addEventListener("input",()=>{render();queuePersistScanState();});
+$("type").addEventListener("change",()=>{render();queuePersistScanState();});
 $("select-all").addEventListener("click",()=>{
  for(const f of filtered())state.selected.add(fileKey(f));
- render();
+ render();queuePersistScanState();
 });
-$("clear-selection").addEventListener("click",()=>{state.selected.clear();render();});
+$("clear-selection").addEventListener("click",()=>{state.selected.clear();render();queuePersistScanState();});
 function selectedFiles(){return state.files.filter(f=>state.selected.has(fileKey(f)));}
 function safeName(name){
  return String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").slice(0,150)||"file";
