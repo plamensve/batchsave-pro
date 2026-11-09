@@ -5,6 +5,7 @@ import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,is
 import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
 import {signIn} from "../services/auth-login.js";
 import {requestPasswordReset} from "../services/auth-recovery.js";
+import {requestMagicLogin} from "../services/auth-magic.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
@@ -114,13 +115,12 @@ function filtered(){
  });
 }
 function updateCount(){
- const count=state.selected.size,available=!state.busy&&state.access;
+ const count=state.selected.size,available=!state.busy;
  $("selected").textContent=count+" selected";
  $("download").disabled=!count||!available;
- $("download").textContent=count>1&&state.source!=="gmail-visible"?"Download ZIP ("+count+")":
-   state.source==="gmail-visible"&&count>1?"Download to folder":"Download files";
- $("download-zip").hidden=state.source==="gmail-visible";
- $("download-zip").disabled=!count||!available||state.source==="gmail-visible";
+ $("download").textContent=count>1?"Download ZIP ("+count+")":"Download file";
+ $("download-zip").hidden=false;
+ $("download-zip").disabled=!count||!available;
  $("clear-selection").disabled=!count||state.busy;
  $("select-all").disabled=!filtered().length||state.busy;
 }
@@ -245,6 +245,19 @@ $("auth-form").addEventListener("submit",async ev=>{
   );
  }finally{button.disabled=false;}
 });
+$("magic-login").addEventListener("click",async()=>{
+ const email=$("email").value.trim();
+ if(!email){authFeedback("Enter your email first, then choose Email sign-in link.","error");$("email").focus();return;}
+ const button=$("magic-login");button.disabled=true;
+ try{
+  authFeedback("Sending a secure sign-in link…");
+  await chrome.storage.local.set({batchsaveLastEmail:email});
+  await requestMagicLogin(email);
+  authFeedback("Sign-in link sent. Open the newest BatchSave Pro email and click the link. When the page says you are signed in, reopen this extension.","success");
+  notice("Email sign-in link sent.");
+ }catch(e){authFeedback("Could not send sign-in link: "+e.message,"error");}
+ finally{button.disabled=false;}
+});
 $("register").addEventListener("click",async()=>{
  const email=$("email").value.trim(),password=$("password").value;
  if(!email||password.length<6){notice("Enter an email and password of at least 6 characters.");return;}
@@ -288,7 +301,7 @@ async function scanGmail(tabId){
  const [{result:visible}]=await chrome.scripting.executeScript({target:{tabId},func:scanVisibleGmailAttachments});
  if(visible?.length){
    showFiles(visible,"gmail-visible");
-   notice(visible.length+" attached file(s) found. Click Download selected to save them with Gmail.");
+   notice(visible.length+" attached file(s) found. Select 2+ to download one ZIP when Gmail exposes direct attachment URLs.");
    return;
  }
  // Do not retain stale files from a previous Gmail conversation.
@@ -354,15 +367,26 @@ function saveBlob(blob,name,saveAs=false){
  });
 }
 async function mustHaveLicense(){
+ const activeSession=await session();
+ if(!activeSession){
+  state.access=false;$("auth-form").hidden=false;
+  throw Error("Sign in is required before downloading. Use Sign in or Email sign-in link.");
+ }
  const e=await entitlement();
  state.access=!!e?.access_granted;
- if(!state.access)throw Error("Your trial or subscription is not active.");
+ if(!state.access)throw Error("Your trial, tester access or subscription is not active.");
+ return e;
+}
+function reportDownloadError(prefix,error){
+ const message=prefix+": "+(error?.message||String(error));
+ notice(message);
+ if(/sign in|required|license|trial|subscription|tester/i.test(message))authFeedback(message,"error");
 }
 $("download").addEventListener("click",async()=>{
  const files=selectedFiles();if(!files.length)return;
  state.busy=true;updateCount();
  try{
-  if(files.length>1&&state.source!=="gmail-visible"){
+  if(files.length>1){
    await requestZipPermissions(files);
    await mustHaveLicense();
    await downloadZipFiles(files);
@@ -424,12 +448,13 @@ $("download").addEventListener("click",async()=>{
    if(!response?.ok)throw Error(response?.error||"Download failed");
    notice("Started "+response.started+" downloads in Downloads/"+response.folder+(response.failed?" · "+response.failed+" failed":"")+".");
   }
- }catch(e){notice("Download failed: "+e.message);}
+ }catch(e){reportDownloadError("Download failed",e);}
  finally{state.busy=false;updateCount();}
 });
 async function requestZipPermissions(files){
  if(state.source==="gmail")return;
- if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
+ const missing=files.filter(f=>!f.url);
+ if(missing.length)throw Error("These Gmail attachments do not expose a downloadable URL. Open the message and rescan, or configure Gmail OAuth for ZIP access.");
  const origins=[...new Set(files.map(f=>new URL(f.url).origin+"/*"))];
  if(origins.length&&!(await chrome.permissions.request({origins})))
   throw Error("Site access denied. Allow access to the file hosts to build a ZIP.");
@@ -437,7 +462,6 @@ async function requestZipPermissions(files){
 async function downloadZipFiles(files){
  if(!files.length)throw Error("Select at least one file.");
  if(files.length>150)throw Error("ZIP supports up to 150 files.");
- if(state.source==="gmail-visible")throw Error("Gmail native attachments require Google OAuth for ZIP creation.");
  const entries=[];let total=0;
  for(const f of files){
   notice("Adding to ZIP "+(entries.length+1)+"/"+files.length+": "+f.name);
@@ -445,8 +469,13 @@ async function downloadZipFiles(files){
   let bytes;
   if(state.source==="gmail")bytes=await readGmailAttachment(f);
   else{
-   const response=await fetch(f.url,{credentials:"include"});
-   if(!response.ok)throw Error("HTTP "+response.status+" for "+f.name);
+   if(!f.url)throw Error("No downloadable URL for "+f.name);
+   let response;
+   try{response=await fetch(f.url,{credentials:"include",redirect:"follow",cache:"no-store"});}catch{}
+   if(!response?.ok){
+    try{response=await fetch(f.url,{credentials:"omit",redirect:"follow",cache:"no-store"});}catch{}
+   }
+   if(!response?.ok)throw Error("Could not fetch "+f.name+(response?" (HTTP "+response.status+")":""));
    bytes=new Uint8Array(await response.arrayBuffer());
   }
   total+=bytes.byteLength;
@@ -464,7 +493,7 @@ $("download-zip").addEventListener("click",async()=>{
   await requestZipPermissions(files);
   await mustHaveLicense();
   await downloadZipFiles(files);
- }catch(e){notice("ZIP failed: "+e.message);}
+ }catch(e){reportDownloadError("ZIP failed",e);}
  finally{state.busy=false;updateCount();}
 });
 async function detectGmail(){
