@@ -70,8 +70,9 @@ test("all scanned files expose preview controls; images and PDFs have rich previ
  assert.match(css,/\.preview-dialog/);
  assert.match(css,/\.preview-details/);
 });
-test("multiple selected page and Gmail API files are routed to a single ZIP",()=>{
- assert.match(js,/if\(files\.length>1&&state\.source!=="gmail-visible"\)\{/);
+test("multiple selected files are routed to a single ZIP through the download plan",()=>{
+ assert.match(js,/const plan=downloadPlan\(files,state\.source\)/);
+ assert.match(js,/if\(plan\.mode==="zip"\)\{/);
  assert.match(js,/await downloadZipFiles\(files\);\s*return;/);
  assert.match(js,/const archiveName=batchArchiveName\(\)/);
  assert.match(js,/await saveBlob\(makeZip\(entries\),archiveName,false\)/);
