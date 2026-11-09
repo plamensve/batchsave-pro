@@ -22,7 +22,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{width:490px;min-width:490px;height:600px;min-height:600px;max-height:600px;overflow:hidden}
+html,body{width:620px;min-width:620px;height:600px;min-height:600px;max-height:600px;overflow:hidden}
 body{margin:0;background:#eef3fa}
 button,input,select{font:inherit}
 button{cursor:pointer}
@@ -105,8 +105,8 @@ button:disabled{cursor:not-allowed;opacity:.43}
 
 /* Account */
 .auth-panel{
- margin:9px 12px 0;
- padding:8px;
+ margin:8px 12px 0;
+ padding:7px;
  flex:0 0 auto;
  border:1px solid #d6e3f7;
  border-radius:14px;
@@ -116,8 +116,8 @@ button:disabled{cursor:not-allowed;opacity:.43}
 .account-status{
  display:inline-flex;
  align-items:center;
- min-height:25px;
- padding:4px 9px;
+ min-height:23px;
+ padding:3px 8px;
  border-radius:999px;
  font-size:10px;
  font-weight:760;
@@ -131,8 +131,8 @@ button:disabled{cursor:not-allowed;opacity:.43}
  display:flex;
  align-items:center;
  gap:10px;
- margin:7px 0 7px;
- padding:8px 10px;
+ margin:6px 0;
+ padding:7px 10px;
  min-width:0;
  border:1px solid #d8e4f4;
  border-radius:12px;
@@ -205,7 +205,7 @@ button:disabled{cursor:not-allowed;opacity:.43}
 }
 .billing-actions{margin-top:2px}
 .billing-actions #upgrade{min-width:205px}
-.logout-button::before{content:"↪";margin-right:6px;font-size:13px}
+
 
 /* Buttons */
 .primary{
@@ -232,21 +232,21 @@ button:disabled{cursor:not-allowed;opacity:.43}
 .toolbar button{
  flex:1;
  min-width:0;
- min-height:42px;
- padding:9px 12px;
+ min-height:40px;
+ padding:8px 12px;
  border-radius:12px;
  font-size:12px;
  font-weight:800;
  letter-spacing:-.1px;
 }
-.action-scan::before{content:"⌗";margin-right:8px;font-size:18px;font-weight:400;vertical-align:-1px}
+
 .toolbar #download{
  border:1px solid #a9c4f6;
  color:#194d9d;
  background:linear-gradient(135deg,#f9fbff,#e9f1ff);
  box-shadow:0 4px 12px rgba(35,88,183,.08);
 }
-.toolbar #download::before{content:"⇩";margin-right:7px;font-size:18px;vertical-align:-1px}
+
 .toolbar #download:not(:disabled):hover{color:#fff;border-color:#177158;background:linear-gradient(135deg,#1c8a6a,#12624e)}
 
 /* Gmail section */
@@ -264,21 +264,8 @@ button:disabled{cursor:not-allowed;opacity:.43}
  font-size:12px;
  letter-spacing:-.15px;
 }
-.gmail-label strong::before{
- content:"M";
- position:absolute;
- left:0;
- top:-2px;
- display:grid;
- place-items:center;
- width:18px;
- height:16px;
- border:2px solid #2865e5;
- border-radius:4px;
- color:#2865e5;
- font-size:8px;
- font-weight:900;
-}
+.gmail-label .section-icon{width:18px;height:18px;flex:0 0 18px;color:#2865e5}
+.gmail-label strong{display:flex;align-items:center;gap:8px;padding-left:0}
 .gmail-label span{font-size:9px;color:#5871a0}
 #gmail-setup{display:block;margin-top:6px;color:#2f63cf;font-size:9.5px;text-decoration:none}
 .scan-feedback{
@@ -295,37 +282,9 @@ button:disabled{cursor:not-allowed;opacity:.43}
  line-height:1.35;
  overflow-wrap:anywhere;
 }
-.scan-feedback::before{
- content:"i";
- position:absolute;
- left:10px;
- top:7px;
- display:grid;
- place-items:center;
- width:14px;
- height:14px;
- border:1.5px solid #4b76b2;
- border-radius:50%;
- font-size:9px;
- font-weight:800;
- color:#3e6aa6;
-}
-
 /* Search & summary */
 .controls{display:flex;gap:8px;padding:0 12px 6px;flex:0 0 auto}
 .search-label{position:relative;flex:1;min-width:0}
-.search-icon{
- position:absolute;
- left:10px;
- top:8px;
- width:13px;
- height:13px;
- border:1.8px solid #71829b;
- border-radius:50%;
- pointer-events:none;
- z-index:1;
-}
-.search-icon::after{content:"";position:absolute;width:5px;height:1.8px;background:#71829b;right:-4px;bottom:-2px;transform:rotate(45deg);border-radius:2px}
 .controls input,.controls select{
  height:34px;
  border:1px solid #d5dfed;
@@ -356,19 +315,16 @@ button:disabled{cursor:not-allowed;opacity:.43}
  font-weight:720;
 }
 .mini-select:not(:disabled):hover{border-color:#abc3e9;background:#f6f9ff}
-.select-all::before{content:"☑";margin-right:5px;color:#225ed8}
-.clear-selection::before{content:"×";margin-right:5px;color:#77879e;font-size:13px}
 .selection-actions .zip-action{
  margin-left:auto;
  color:#167257;
  border-color:#b9dfd1;
  background:linear-gradient(#f2fbf7,#e7f6ef);
 }
-.selection-actions .zip-action::before{content:"⇩";margin-right:5px}
 .selection-actions .zip-action:not(:disabled):hover{color:#fff;border-color:#167257;background:#167257}
 
 /* Results */
-.results{margin:0 12px 5px;flex:1 1 auto;min-height:125px;max-height:none;overflow-y:auto;border:1px solid #dce5f2;border-radius:13px;background:rgba(255,255,255,.92);box-shadow:var(--shadow-soft)}
+.results{margin:0 12px 5px;flex:1 1 auto;min-height:185px;max-height:none;overflow-y:auto;border:1px solid #dce5f2;border-radius:13px;background:rgba(255,255,255,.92);box-shadow:var(--shadow-soft)}
 .results::-webkit-scrollbar{width:7px}
 .results::-webkit-scrollbar-track{background:transparent}
 .results::-webkit-scrollbar-thumb{background:#c2cee0;border-radius:999px;border:2px solid transparent;background-clip:padding-box}
@@ -470,22 +426,6 @@ footer{
  line-height:1.35;
  text-align:left;
 }
-.notice::before{
- content:"i";
- position:absolute;
- left:1px;
- top:0;
- display:grid;
- place-items:center;
- width:13px;
- height:13px;
- border:1.4px solid #647ea7;
- border-radius:50%;
- color:#58739f;
- font-size:8px;
- font-weight:800;
-}
-
 /* Preview */
 .preview-dialog{
  position:fixed;
@@ -540,3 +480,64 @@ footer{
 
 /* Accessibility helpers */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* v0.9.4: larger popup and consistent SVG icon system */
+.ui-icon,.status-svg,.preview-vector,.empty-vector{
+ width:18px;
+ height:18px;
+ flex:0 0 18px;
+ fill:none;
+ stroke:currentColor;
+ stroke-width:1.8;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+}
+.toolbar button,.auth-actions button,.mini-select{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+}
+.toolbar .ui-icon{width:19px;height:19px;flex-basis:19px}
+.logout-button .ui-icon{width:16px;height:16px;flex-basis:16px}
+.mini-select .ui-icon{width:14px;height:14px;flex-basis:14px}
+.search-svg{
+ position:absolute;
+ left:10px;
+ top:8px;
+ width:17px;
+ height:17px;
+ color:#71829b;
+ pointer-events:none;
+ z-index:1;
+}
+.account-status{gap:6px}
+.status-svg{width:16px;height:16px;flex-basis:16px;color:#278564}
+.account-status[data-tone="warning"] .status-svg{color:#b17b20}
+.scan-feedback{
+ display:flex;
+ align-items:flex-start;
+ gap:7px;
+ padding:7px 10px;
+}
+.scan-feedback .info-svg{width:15px;height:15px;flex-basis:15px;margin-top:0;color:#4b76b2}
+.scan-feedback-text{min-width:0}
+.gmail-label strong{padding-left:0}
+.notice{
+ display:flex;
+ align-items:flex-start;
+ gap:7px;
+ padding-left:0;
+}
+.notice .ui-icon{width:14px;height:14px;flex-basis:14px;color:#647ea7}
+.notice-text{min-width:0}
+.empty-icon{display:grid;place-items:center}
+.empty-svg,.empty-vector{width:22px;height:22px;color:#2b67dc}
+.preview-vector{width:20px;height:20px;color:#5873a0}
+.preview-heading button{display:grid;place-items:center}
+.preview-heading button .ui-icon{width:15px;height:15px}
+.file-type-badge{min-width:42px}
+.results{border-radius:14px}
+.file{min-height:64px;padding:9px 11px}
+.file-name{font-size:11.7px}
+.file-sub{font-size:9.4px}

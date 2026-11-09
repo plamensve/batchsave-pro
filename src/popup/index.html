@@ -21,7 +21,7 @@
  </header>
 
  <section class="auth-panel" aria-label="Account">
-  <div id="account-status" class="account-status">Checking account…</div>
+  <div id="account-status" class="account-status"><svg class="status-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.3 2.4 4.8-5"/></svg><span class="account-status-text">Checking account…</span></div>
   <div id="account-details" class="account-details" hidden>
    <span class="account-avatar" id="account-avatar">●</span>
    <div class="account-info">
@@ -45,28 +45,28 @@
   <div class="auth-actions billing-actions" id="billing-actions" hidden>
    <button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button>
    <button id="manage" class="secondary" type="button" hidden>Billing</button>
-   <button id="logout" class="secondary logout-button" type="button">Sign out</button>
+   <button id="logout" class="secondary logout-button" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4m4-4H9"/></svg><span>Sign out</span></button>
   </div>
  </section>
 
  <section class="toolbar" aria-label="Main actions">
-  <button id="scan" class="primary action-scan" type="button">Scan this page</button>
-  <button id="download" class="action-download" type="button" disabled>Download selected</button>
+  <button id="scan" class="primary action-scan" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></svg><span>Scan this page</span></button>
+  <button id="download" class="action-download" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg><span class="button-label">Download selected</span></button>
  </section>
 
  <section id="gmail-controls" class="gmail-controls" hidden>
   <div class="gmail-label">
-   <strong>Gmail attachments</strong>
+   <strong><svg class="ui-icon section-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Z"/><path d="m4 7 8 6 8-6"/></svg><span>Gmail attachments</span></strong>
    <span>Open message · Download files</span>
   </div>
   <a id="gmail-setup" hidden href="https://github.com/plamensve/batchsave-pro/blob/main/docs/GMAIL_SETUP.md" target="_blank" rel="noreferrer">Configure Google OAuth to enable Gmail scanning</a>
  </section>
 
- <div id="scan-feedback" class="scan-feedback" role="status" aria-live="polite">Open a message in Gmail, then press Scan this page.</div>
+ <div id="scan-feedback" class="scan-feedback" role="status" aria-live="polite"><svg class="ui-icon info-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.25h.01"/></svg><span class="scan-feedback-text">Open a message in Gmail, then press Scan this page.</span></div>
 
  <section class="controls">
   <label class="search-label">
-   <span class="search-icon" aria-hidden="true"></span>
+   <svg class="ui-icon search-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
    <span class="sr-only">Search filenames</span>
    <input id="search" type="search" placeholder="Search filenames" disabled>
   </label>
@@ -86,28 +86,28 @@
  </div>
 
  <section class="selection-actions" aria-label="File selection actions">
-  <button id="select-all" class="mini-select select-all" type="button" disabled>Select all</button>
-  <button id="clear-selection" class="mini-select clear-selection" type="button" disabled>Clear selection</button>
-  <button id="download-zip" class="mini-select zip-action" type="button" disabled>Download ZIP</button>
+  <button id="select-all" class="mini-select select-all" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>Select all</span></button>
+  <button id="clear-selection" class="mini-select clear-selection" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/></svg><span>Clear selection</span></button>
+  <button id="download-zip" class="mini-select zip-action" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l3 3v5M7 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M14 3v4h4M17 13v8m0 0 3-3m-3 3-3-3"/></svg><span>Download ZIP</span></button>
  </section>
 
  <section id="results" class="results" aria-live="polite">
   <div class="empty">
-   <span class="empty-icon" aria-hidden="true">↓</span>
+   <span class="empty-icon" aria-hidden="true"><svg class="empty-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h5l2-2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M12 10v6m0 0 2.5-2.5M12 16l-2.5-2.5"/></svg></span>
    <strong>Ready to scan</strong>
    <span>Open a page or Gmail and click Scan this page.</span>
   </div>
  </section>
 
  <footer>
-  <div id="status" class="notice" role="status">Files are processed locally in Chrome.</div>
+  <div id="status" class="notice" role="status"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.25h.01"/></svg><span class="notice-text">Files are processed locally in Chrome.</span></div>
  </footer>
 
  <div id="preview-dialog" class="preview-dialog" role="dialog" aria-modal="true" aria-label="File preview" hidden>
   <div class="preview-card">
    <div class="preview-heading">
     <div class="preview-title-wrap"><span class="preview-dot" aria-hidden="true"></span><strong id="preview-title">File preview</strong></div>
-    <button id="preview-close" type="button" aria-label="Close preview">✕</button>
+    <button id="preview-close" type="button" aria-label="Close preview"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button>
    </div>
    <div class="preview-body">
     <img id="preview-image" alt="Selected image preview" hidden>
