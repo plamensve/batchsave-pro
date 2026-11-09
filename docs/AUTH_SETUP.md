@@ -39,3 +39,12 @@ Add the following exact address under **Authentication → URL Configuration →
 `https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/account-recovery`
 
 Without this allowlisted redirect, Supabase may fall back to the configured Site URL and the reset page will not receive the recovery token.
+
+
+## Production email delivery
+
+The Supabase built-in Auth email provider is for testing only and is limited to **2 Auth emails per hour for the entire project**. Signup confirmation and password-recovery emails share this quota.
+
+For production, configure **custom SMTP** or a **Send Email Hook** in Supabase Authentication. Only after one of those is configured should the project email-sending rate limit be increased under **Authentication → Rate Limits**.
+
+The extension also enforces a short local recovery cooldown so repeated clicks do not waste Auth requests. A Supabase `over_email_send_rate_limit` response is shown explicitly and does not clear or alter the user's login password.
