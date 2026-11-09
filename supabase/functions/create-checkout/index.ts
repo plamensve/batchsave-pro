@@ -6,8 +6,10 @@ Deno.serve(async(req)=>{
   if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
   if(req.method==="GET")return new Response("You can return to BatchSave Pro and refresh the extension to see your subscription status.",{headers:{"content-type":"text/plain;charset=utf-8"}});
   if(req.method!=="POST")return json({error:"Method not allowed"},405);
-  const base=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),secret=Deno.env.get("STRIPE_SECRET_KEY"),price=Deno.env.get("STRIPE_PRICE_ID");
-  if(!base||!anon||!service||!secret||!price)return json({error:"Stripe test credentials are not configured yet"},503);
+  const base=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),secret=Deno.env.get("STRIPE_SECRET_KEY");
+  const price="price_1UZcBTBO9kJFFriPItUcssi7";
+  const missing=[["SUPABASE_URL",base],["SUPABASE_ANON_KEY",anon],["SUPABASE_SERVICE_ROLE_KEY",service],["STRIPE_SECRET_KEY",secret]].filter(([,value])=>!value).map(([name])=>name);
+  if(missing.length)return json({error:"Billing backend is not fully configured",missing},503);
   const jwt=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
   const auth=createClient(base,anon);
   const {data:{user},error:authError}=await auth.auth.getUser(jwt);
