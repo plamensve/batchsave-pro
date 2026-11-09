@@ -407,8 +407,8 @@ $("signup-form").addEventListener("submit",async event=>{
   document.documentElement.classList.remove("signup-open");
   $("signup-form").hidden=true;$("auth-form").hidden=false;
   clearPasswordInput();
-  authFeedback("Account creation request accepted. Check your email and confirm the account, then sign in with your password.","success");
-  notice("Account created · confirm your email before signing in.");
+  authFeedback("Registration request processed. If this email is new, check your inbox and spam folder for the confirmation message. If no confirmation email arrives, the address may already be registered — use Sign in or Send reset email instead.","success");
+  notice("Registration request processed.");
  }catch(e){
   authFeedback("Account creation failed: "+e.message,"error");
  }finally{button.disabled=false;}
