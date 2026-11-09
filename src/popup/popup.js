@@ -83,6 +83,16 @@ function authFeedback(msg,kind="info"){
  if(msg)box.scrollIntoView({block:"nearest",behavior:"instant"});
 }
 
+const passwordInput=$("password");
+function unlockPasswordInput(){
+ passwordInput.readOnly=false;
+ passwordInput.value="";
+}
+passwordInput.value="";
+passwordInput.addEventListener("pointerdown",unlockPasswordInput,{once:true});
+passwordInput.addEventListener("focus",unlockPasswordInput,{once:true});
+setTimeout(()=>{if(passwordInput.readOnly)passwordInput.value="";},0);
+
 function message(msg){$("account-status").textContent=msg;}
 function typeOf(f){
  if(isEmail(f)){
@@ -222,14 +232,30 @@ $("auth-form").addEventListener("submit",async ev=>{
   notice("Signed in successfully.");await refreshAccount();authFeedback("");
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
-  authFeedback(bad?"Supabase rejected these credentials. Check the email and password, or choose Reset password.":`Sign in failed: ${e.message}`,"error");
+  if(bad){
+   passwordInput.value="";
+   passwordInput.readOnly=false;
+   passwordInput.focus();
+  }
+  authFeedback(
+   bad
+    ?"Supabase rejected that password. The password field was cleared. Re-enter the current password, or choose Send reset email and use the newest reset message."
+    :`Sign in failed: ${e.message}`,
+   "error"
+  );
  }finally{button.disabled=false;}
 });
 $("register").addEventListener("click",async()=>{
  const email=$("email").value.trim(),password=$("password").value;
  if(!email||password.length<6){notice("Enter an email and password of at least 6 characters.");return;}
  $("register").disabled=true;
- try{authFeedback("Creating account…");await signUp(email,password);authFeedback("Account created. Confirm your email and return to Sign in.","success");notice("Check your email, confirm the address, then Sign in.");}
+ try{
+  authFeedback("Checking registration…");
+  await signUp(email,password);
+  passwordInput.value="";
+  authFeedback("If this email is new, check your inbox and confirm it. If you already have an account, use Sign in or Send reset email instead of creating it again.","success");
+  notice("Registration request processed. Existing accounts should use Sign in or Reset password.");
+ }
  catch(e){authFeedback("Registration failed: "+e.message,"error");}finally{$("register").disabled=false;}
 });
 $("reset-password").addEventListener("click",async()=>{
@@ -240,8 +266,9 @@ $("reset-password").addEventListener("click",async()=>{
   authFeedback("Requesting password reset email…");
   await chrome.storage.local.set({batchsaveLastEmail:email});
   await requestPasswordReset(email);
-  $("password").value="";
-  authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the newest password reset email, choose a new password, wait for “Password updated successfully”, then return here and type the NEW password.","success");
+  passwordInput.value="";
+  passwordInput.readOnly=true;
+  authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the NEWEST password reset email, set a new password, and wait for “Password updated successfully”. Then reopen BatchSave Pro, click the password field, and type the NEW password.","success");
   notice("Password reset email sent. Use the newest message.");
  }
  catch(e){authFeedback("Password reset request failed: "+e.message,"error");}
