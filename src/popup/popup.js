@@ -212,8 +212,10 @@ async function refreshAccount(){
    ?(info?.subscription_status==="tester"?"✓ Signed in · Tester access active":remaining>0?"✓ Signed in · Trial · "+Math.ceil(remaining/3600000)+"h left":"✓ Signed in · Pro active")
    :"✓ Signed in · Trial or subscription required");
   $("billing-actions").hidden=false;
-  $("upgrade").hidden=state.access||["active","trialing"].includes(info?.subscription_status);
-  $("manage").hidden=!info?.subscription_status||info.subscription_status==="tester";
+  const tester=info?.subscription_status==="tester";
+   $("upgrade").hidden=!tester&&(state.access||["active","trialing"].includes(info?.subscription_status));
+   $("upgrade").textContent=tester?"Test Stripe checkout · €9.90/month":"Start trial · €9.90/month";
+   $("manage").hidden=!info?.subscription_status||tester;
  }catch(e){
   state.access=false;displayProfile(current,"License check unavailable");
   message("Signed in · license check failed: "+e.message);
