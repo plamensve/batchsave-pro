@@ -107,19 +107,9 @@ function authFeedback(msg,kind="info"){
 }
 
 const passwordInput=$("password");
-function unlockPasswordInput(){
- if(!passwordInput.readOnly)return;
- passwordInput.readOnly=false;
+function clearPasswordInput(){
  passwordInput.value="";
 }
-function lockPasswordInput(){
- passwordInput.value="";
- passwordInput.readOnly=true;
-}
-lockPasswordInput();
-passwordInput.addEventListener("pointerdown",unlockPasswordInput);
-passwordInput.addEventListener("focus",unlockPasswordInput);
-setTimeout(()=>{if(passwordInput.readOnly)passwordInput.value="";},0);
 
 function message(msg){
  const box=$("account-status"),text=box.querySelector(".account-status-text");
@@ -354,7 +344,7 @@ $("auth-form").addEventListener("submit",async ev=>{
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
   if(bad){
-   lockPasswordInput();
+   clearPasswordInput();
    passwordInput.focus();
   }
   authFeedback(
@@ -407,7 +397,7 @@ $("signup-form").addEventListener("submit",async event=>{
   $("signup-password").value="";$("signup-confirm").value="";
   document.documentElement.classList.remove("signup-open");
   $("signup-form").hidden=true;$("auth-form").hidden=false;
-  lockPasswordInput();
+  clearPasswordInput();
   authFeedback("Account creation request accepted. Check your email and confirm the account, then sign in with your password.","success");
   notice("Account created · confirm your email before signing in.");
  }catch(e){
@@ -422,7 +412,7 @@ $("reset-password").addEventListener("click",async()=>{
   authFeedback("Requesting password reset email…");
   await chrome.storage.local.set({batchsaveLastEmail:email});
   await requestPasswordReset(email);
-  lockPasswordInput();
+  clearPasswordInput();
   authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the NEWEST password reset email, set a new password, and wait for “Password updated successfully”. Then reopen BatchSave Pro, click the password field, and type the NEW password.","success");
   notice("Password reset email sent. Use the newest message.");
  }
