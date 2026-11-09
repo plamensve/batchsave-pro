@@ -451,18 +451,21 @@ $("upgrade").addEventListener("click",async()=>{
  const button=$("upgrade"),label=button.querySelector(".upgrade-label");
  const original=label?.textContent||"Start 3-day free trial · €9.90/month";
  button.disabled=true;button.classList.add("billing-launching");
- const checkoutPromise=billingFunction("create-checkout");
  try{
   for(const n of [3,2,1]){
    if(label)label.textContent="Opening Stripe · "+n;
    await sleep(700);
   }
+  if(label)label.textContent="Creating secure checkout…";
+  const url=await billingFunction("create-checkout");
   if(label)label.textContent="Opening Stripe…";
-  const url=await checkoutPromise;
   await chrome.tabs.create({url});
   notice("Stripe Checkout opened in a new tab.");
+  authFeedback("");
  }catch(e){
-  notice("Billing: "+e.message);
+  const msg="Stripe checkout failed: "+e.message;
+  notice(msg);
+  authFeedback(msg,"error");
  }finally{
   button.classList.remove("billing-launching");
   button.disabled=false;
@@ -472,7 +475,7 @@ $("upgrade").addEventListener("click",async()=>{
 $("manage").addEventListener("click",async()=>{
  const button=$("manage");button.disabled=true;
  try{const url=await billingFunction("billing-portal");await chrome.tabs.create({url});}
- catch(e){notice("Billing: "+e.message);}
+ catch(e){const msg="Billing portal failed: "+e.message;notice(msg);authFeedback(msg,"error");}
  finally{button.disabled=false;}
 });
 async function scanGmail(tab){
