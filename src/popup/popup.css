@@ -82,6 +82,7 @@ button:disabled{cursor:not-allowed;opacity:.43}
  pointer-events:none;
 }
 .brand{display:flex;align-items:center;gap:11px;min-width:0;position:relative;z-index:1}
+.brand-logo{width:44px;height:44px;display:block;object-fit:contain;flex:0 0 44px;filter:drop-shadow(0 5px 10px rgba(0,25,75,.25))}
 .mark{
  display:grid;
  place-items:center;
