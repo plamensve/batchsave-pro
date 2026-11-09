@@ -182,7 +182,15 @@ test("Stripe checkout shows an animated 3 2 1 launch state",()=>{
  assert.match(js,/billing-launching/);
  assert.match(css,/@keyframes billingSweep/);
 });
-test("primary scan/download command bar is above the account panel",()=>{
- const toolbar=html.indexOf('class="toolbar"'),account=html.indexOf('class="auth-panel"');
- assert.ok(toolbar>0&&toolbar<account);
+test("account and billing actions appear before scan/download actions",()=>{
+ const account=html.indexOf('class="auth-panel"');
+ const billing=html.indexOf('id="billing-actions"');
+ const toolbar=html.indexOf('class="toolbar"');
+ assert.ok(account>0&&billing>account&&toolbar>billing);
+});
+test("premium header uses dark navy treatment with a gold accent",()=>{
+ assert.match(css,/linear-gradient\(118deg,#071b3d/);
+ assert.match(css,/border-bottom:3px solid #f4b000/);
+ assert.match(css,/\.workspace-button/);
+ assert.match(css,/color:#eef6ff/);
 });
