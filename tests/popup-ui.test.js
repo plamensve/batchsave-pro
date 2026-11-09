@@ -126,3 +126,24 @@ test("tester accounts keep a visible Stripe checkout button without losing teste
  assert.match(js,/Test Stripe checkout · €9\.90\/month/);
  assert.match(js,/\$\("upgrade"\)\.hidden=!tester/);
 });
+
+test("premium popup design keeps core behavior controls and polished visual hooks",()=>{
+ for(const id of ["scan","download","upgrade","logout","search","type","results","download-zip"])
+  assert.ok(html.includes('id="'+id+'"'),"missing functional control "+id);
+ assert.match(html,/brand-divider/);
+ assert.match(html,/action-scan/);
+ assert.match(html,/action-download/);
+ assert.match(css,/--blue:#2463eb/);
+ assert.match(css,/radial-gradient/);
+ assert.match(css,/\.file-type-badge/);
+ assert.match(js,/badge\.className="file-type-badge"/);
+ assert.match(js,/box\.dataset\.tone/);
+});
+test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP event paths",()=>{
+ assert.match(js,/billingFunction\(fn\)/);
+ assert.match(js,/downloadPlan\(files,state\.source\)/);
+ assert.match(js,/downloadVisibleGmailAttachment/);
+ assert.match(js,/downloadZipFiles\(files\)/);
+ assert.match(js,/mustHaveLicense\(\)/);
+ assert.match(js,/requestPasswordReset\(email\)/);
+});
