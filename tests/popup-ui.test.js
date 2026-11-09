@@ -217,3 +217,21 @@ test("billing actions are visually differentiated by purpose",()=>{
  assert.match(css,/\.billing-actions \.session-action/);
  assert.match(css,/color:#8c3443/);
 });
+
+test("inline scan feedback field is removed to expand results workspace",()=>{
+ assert.ok(!html.includes('id="scan-feedback"'));
+ assert.ok(!css.includes(".scan-feedback{"));
+ assert.ok(!js.includes('$("scan-feedback")'));
+});
+test("Clear results deletes current results and persisted scan session",()=>{
+ assert.ok(html.includes('id="clear-results"'));
+ assert.match(js,/\$\("clear-results"\)\.addEventListener\("click",async\(\)=>/);
+ assert.match(js,/state\.files=\[\]/);
+ assert.match(js,/state\.selected\.clear\(\)/);
+ assert.match(js,/chrome\.storage\.session\.remove\(SCAN_STATE_KEY\)/);
+ assert.match(js,/Scanned results cleared/);
+});
+test("results workspace receives the reclaimed vertical area",()=>{
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0/);
+ assert.match(css,/\.selection-actions\{display:flex;align-items:center;gap:7px;padding:0 12px 5px/);
+});
