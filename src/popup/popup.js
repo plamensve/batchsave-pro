@@ -98,7 +98,8 @@ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("preview
 function notice(msg){
  const status=$("status"),text=status.querySelector(".notice-text");
  if(text)text.textContent=msg;else status.textContent=msg;
- $("scan-feedback").textContent=msg;
+ const scan=$("scan-feedback"),scanText=scan.querySelector(".scan-feedback-text");
+ if(scanText)scanText.textContent=msg;else scan.textContent=msg;
 }
 function authFeedback(msg,kind="info"){
  const box=$("auth-feedback");box.hidden=!msg;box.textContent=msg||"";box.dataset.kind=kind;
@@ -116,8 +117,8 @@ passwordInput.addEventListener("focus",unlockPasswordInput,{once:true});
 setTimeout(()=>{if(passwordInput.readOnly)passwordInput.value="";},0);
 
 function message(msg){
- const box=$("account-status");
- box.textContent=msg;
+ const box=$("account-status"),text=box.querySelector(".account-status-text");
+ if(text)text.textContent=msg;else box.textContent=msg;
  box.dataset.tone=/Tester access active|Trial|Pro active|Signed in/i.test(msg)?"success":
    /required|failed|unavailable/i.test(msg)?"warning":"info";
 }
