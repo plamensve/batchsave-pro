@@ -99,10 +99,14 @@ test("password field blocks stale autofill and clears invalid credentials",()=>{
  assert.match(js,/passwordInput\.value=""/);
  assert.match(js,/Supabase rejected that password/);
 });
-test("registration messaging does not claim an existing account was newly created",()=>{
- assert.ok(!js.includes("Account created. Confirm your email"));
- assert.match(js,/If this email is new/);
- assert.match(js,/already have an account/);
+test("Create account opens a dedicated registration form instead of reusing login fields",()=>{
+ for(const id of ["signup-form","signup-name","signup-email","signup-password","signup-confirm","signup-submit","signup-cancel"])
+  assert.ok(html.includes('id="'+id+'"'),"missing signup control "+id);
+ assert.match(js,/function openSignupForm\(\)/);
+ assert.match(js,/\$\("register"\)\.addEventListener\("click",openSignupForm\)/);
+ assert.match(js,/\$\("signup-form"\)\.addEventListener\("submit"/);
+ assert.match(js,/signUp\(email,password,\{fullName:name\}\)/);
+ assert.match(js,/The two passwords do not match/);
 });
 
 test("download button depends on selection and busy state, not cached license state",()=>{
@@ -203,4 +207,13 @@ test("password field can be re-unlocked after reset or failed login",()=>{
  assert.ok(!js.includes('{once:true}'));
  assert.match(js,/lockPasswordInput\(\);\n   passwordInput\.focus\(\)/);
  assert.match(js,/lockPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
+});
+
+test("billing actions are visually differentiated by purpose",()=>{
+ assert.match(html,/class="primary subscription-action"/);
+ assert.match(html,/class="secondary logout-button session-action"/);
+ assert.match(html,/class="upgrade-label"/);
+ assert.match(css,/\.billing-actions \.subscription-action/);
+ assert.match(css,/\.billing-actions \.session-action/);
+ assert.match(css,/color:#8c3443/);
 });
