@@ -1,7 +1,8 @@
-import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
+import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,downloadAllVisibleGmailAttachments,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {batchFolder,batchArchiveName} from "../lib/download-batch.js";
 import {downloadPlan} from "../lib/download-plan.js";
+import {SCAN_STATE_KEY,makeScanSnapshot,canRestoreScanSnapshot} from "../lib/scan-state.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
 import {signIn} from "../services/auth-login.js";
@@ -9,7 +10,16 @@ import {requestPasswordReset} from "../services/auth-recovery.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
-const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false};
+const fullWorkspace=new URLSearchParams(location.search).get("full")==="1";
+document.documentElement.classList.toggle("full-workspace",fullWorkspace);
+$("open-workspace").hidden=fullWorkspace;
+$("open-workspace").addEventListener("click",async()=>{
+ await chrome.windows.create({
+  url:chrome.runtime.getURL("src/popup/index.html?full=1"),
+  type:"popup",focused:true,width:780,height:840
+ });
+});
+const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
@@ -141,16 +151,59 @@ function filtered(){
   return show&&(!search||[f.name,f.subject||"",f.from||"",f.url||""].some(s=>s.toLowerCase().includes(search)));
  });
 }
+async function persistScanState(){
+ if(!state.files.length)return;
+ const snapshot=makeScanSnapshot({
+  files:state.files,
+  selected:[...state.selected],
+  source:state.source,
+  search:$("search").value,
+  type:$("type").value,
+  tabId:state.scanTabId,
+  tabUrl:state.scanTabUrl
+ });
+ await chrome.storage.session.set({[SCAN_STATE_KEY]:snapshot});
+}
+let persistTimer=null;
+function queuePersistScanState(){
+ clearTimeout(persistTimer);
+ persistTimer=setTimeout(()=>persistScanState().catch(()=>{}),60);
+}
+async function restoreScanState(){
+ const stored=await chrome.storage.session.get(SCAN_STATE_KEY);
+ const snapshot=stored[SCAN_STATE_KEY];
+ if(!snapshot)return false;
+ let tab=null;
+ if(fullWorkspace&&snapshot.source==="gmail-visible"&&Number.isInteger(snapshot.tabId)){
+  try{tab=await chrome.tabs.get(snapshot.tabId);}catch{}
+ }else{
+  try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
+ }
+ if(!canRestoreScanSnapshot(snapshot,{tabId:tab?.id??null,tabUrl:tab?.url||""}))return false;
+ state.files=snapshot.files;
+ state.source=snapshot.source;
+ state.selected=new Set(snapshot.selected||[]);
+ state.scanTabId=snapshot.tabId;
+ state.scanTabUrl=snapshot.tabUrl||"";
+ $("search").disabled=false;$("search").value=snapshot.search||"";
+ $("type").disabled=false;$("type").value=[...$("type").options].some(o=>o.value===snapshot.type)?snapshot.type:"relevant";
+ $("gmail-controls").hidden=!isEmail({source:state.source});
+ render();
+ notice("Restored the last scan · "+state.files.length+" file(s).");
+ return true;
+}
 function updateCount(){
- const count=state.selected.size,available=!state.busy;
+ const count=state.selected.size,visible=filtered().length,available=!state.busy;
  $("selected").textContent=count+" selected";
  $("download").disabled=!count||!available;
  const label=$("download").querySelector(".button-label");
  if(label)label.textContent=count>1?"Download ZIP ("+count+")":"Download file";
+ const zipCount=count||visible,zipLabel=$("download-zip").querySelector(".zip-label");
  $("download-zip").hidden=false;
- $("download-zip").disabled=!count||!available;
+ $("download-zip").disabled=!available||zipCount<2;
+ if(zipLabel)zipLabel.textContent=count?"Download ZIP ("+count+")":visible>=2?"ZIP all visible ("+visible+")":"Download ZIP";
  $("clear-selection").disabled=!count||state.busy;
- $("select-all").disabled=!filtered().length||state.busy;
+ $("select-all").disabled=!visible||state.busy;
 }
 function render(){
  const shown=filtered(),target=$("results");target.replaceChildren();
@@ -167,7 +220,7 @@ function render(){
   checkbox.setAttribute("aria-label","Select "+f.name);
   checkbox.checked=state.selected.has(fileKey(f));
   checkbox.addEventListener("change",()=>{
-   checkbox.checked?state.selected.add(fileKey(f)):state.selected.delete(fileKey(f));updateCount();
+   checkbox.checked?state.selected.add(fileKey(f)):state.selected.delete(fileKey(f));updateCount();queuePersistScanState();
   });
   const meta=document.createElement("label");meta.className="file-meta";meta.htmlFor=checkbox.id;
   const title=document.createElement("span");title.className="file-name";title.textContent=f.name;
@@ -202,11 +255,16 @@ function render(){
  $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
  updateCount();
 }
-function showFiles(files,source){
+function showFiles(files,source,context={}){
  state.files=source==="page"?uniqueFiles(files):files;
  state.source=source;state.selected.clear();
+ state.scanTabId=Number.isInteger(context.tabId)?context.tabId:null;
+ state.scanTabUrl=context.tabUrl||"";
  if(source==="gmail-visible"&&state.files.length===1)state.selected.add(fileKey(state.files[0]));
- $("search").disabled=false;$("type").disabled=false;$("type").value="relevant";render();
+ $("search").disabled=false;$("search").value="";
+ $("type").disabled=false;$("type").value="relevant";render();
+ if(state.files.length)persistScanState().catch(()=>{});
+ else chrome.storage.session.remove(SCAN_STATE_KEY).catch(()=>{});
 }
 function displayProfile(user,plan){
  const identity=user?.user_metadata?.full_name||user?.user_metadata?.name||user?.email?.split("@")[0]||"BatchSave account";
@@ -311,22 +369,45 @@ $("reset-password").addEventListener("click",async()=>{
 $("logout").addEventListener("click",async()=>{
  await signOut();state.selected.clear();authFeedback("");await refreshAccount();render();notice("Signed out.");
 });
-for(const [id,fn] of [["upgrade","create-checkout"],["manage","billing-portal"]]){
- $(id).addEventListener("click",async()=>{
-  try{const url=await billingFunction(fn);await chrome.tabs.create({url});}
-  catch(e){notice("Billing: "+e.message);}
- });
-}
-async function scanGmail(tabId){
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+$("upgrade").addEventListener("click",async()=>{
+ const button=$("upgrade"),original=button.textContent;
+ button.disabled=true;button.classList.add("billing-launching");
+ const checkoutPromise=billingFunction("create-checkout");
+ try{
+  for(const n of [3,2,1]){
+   button.textContent="Opening Stripe · "+n;
+   await sleep(700);
+  }
+  button.textContent="Opening Stripe…";
+  const url=await checkoutPromise;
+  await chrome.tabs.create({url});
+  notice("Stripe Checkout opened in a new tab.");
+ }catch(e){
+  notice("Billing: "+e.message);
+ }finally{
+  button.classList.remove("billing-launching");
+  button.disabled=false;
+  button.textContent=original;
+ }
+});
+$("manage").addEventListener("click",async()=>{
+ const button=$("manage");button.disabled=true;
+ try{const url=await billingFunction("billing-portal");await chrome.tabs.create({url});}
+ catch(e){notice("Billing: "+e.message);}
+ finally{button.disabled=false;}
+});
+async function scanGmail(tab){
+ const tabId=tab.id;
  notice("Checking attachments in the open Gmail conversation…");
  const [{result:visible}]=await chrome.scripting.executeScript({target:{tabId},func:scanVisibleGmailAttachments});
  if(visible?.length){
-   showFiles(visible,"gmail-visible");
+   showFiles(visible,"gmail-visible",{tabId,tabUrl:tab.url||""});
    notice(visible.length+" attached file(s) found. Select 2+ files to create one ZIP when Gmail exposes direct attachment URLs.");
    return;
  }
  // Do not retain stale files from a previous Gmail conversation.
- showFiles([],"gmail-visible");
+ showFiles([],"gmail-visible",{tabId,tabUrl:tab.url||""});
  let diagnostic={cards:0,downloadDescriptors:0,namedNodes:0,filenameLabels:0};
  try{
   const [{result}]=await chrome.scripting.executeScript({target:{tabId},func:diagnoseVisibleGmailAttachments});
@@ -348,7 +429,7 @@ async function scanGmail(tabId){
   maxResults:35,
   onProgress:(done,total)=>notice("Scanning Gmail messages "+done+"/"+total+"…")
  });
- showFiles(response.files,"gmail");
+ showFiles(response.files,"gmail",{tabId,tabUrl:tab.url||""});
  notice(response.files.length+" Gmail attachments found in "+response.scannedMessages+" messages"+(response.nextPageToken?" (first page)":"")+".");
 }
 $("scan").addEventListener("click",async()=>{
@@ -359,24 +440,24 @@ $("scan").addEventListener("click",async()=>{
   const gmail=tab.url?.startsWith("https://mail.google.com/");
   $("gmail-controls").hidden=!gmail;
   if(gmail){
-   await scanGmail(tab.id);
+   await scanGmail(tab);
   }else{
    notice("Scanning the current page…");
    const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:collectFromPage});
    const files=(result||[]).map(f=>({...f,kind:classifyFile(f.url,f.kind),name:f.name||filenameFromUrl(f.url)}));
-   showFiles(files,"page");
+   showFiles(files,"page",{tabId:tab.id,tabUrl:tab.url||""});
    notice(filtered().length+" relevant files/photos detected.");
   }
  }catch(e){notice("Scan failed: "+e.message);}
  finally{button.disabled=false;state.busy=false;updateCount();}
 });
-$("search").addEventListener("input",render);
-$("type").addEventListener("change",render);
+$("search").addEventListener("input",()=>{render();queuePersistScanState();});
+$("type").addEventListener("change",()=>{render();queuePersistScanState();});
 $("select-all").addEventListener("click",()=>{
  for(const f of filtered())state.selected.add(fileKey(f));
- render();
+ render();queuePersistScanState();
 });
-$("clear-selection").addEventListener("click",()=>{state.selected.clear();render();});
+$("clear-selection").addEventListener("click",()=>{state.selected.clear();render();queuePersistScanState();});
 function selectedFiles(){return state.files.filter(f=>state.selected.has(fileKey(f)));}
 function safeName(name){
  return String(name||"file").replace(/[\\/:*?"<>|\x00-\x1f]/g,"_").replace(/^\.+/,"").slice(0,150)||"file";
@@ -468,6 +549,30 @@ $("download").addEventListener("click",async()=>{
  }catch(e){reportDownloadError("Download failed",e);}
  finally{state.busy=false;updateCount();}
 });
+async function downloadNativeGmailZip(files){
+ if(state.source!=="gmail-visible")return false;
+ if(files.length!==state.files.length)throw Error("For Gmail native ZIP, include all attachments from the open message.");
+ const tabId=state.scanTabId;
+ if(!Number.isInteger(tabId))throw Error("The original Gmail tab is unavailable. Open the message and scan again.");
+ await mustHaveLicense();
+ notice("Starting Gmail's Download all attachments ZIP…");
+ const prior=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+ const known=new Set(prior.map(item=>item.id));
+ const [{result}]=await chrome.scripting.executeScript({
+  target:{tabId},world:"MAIN",func:downloadAllVisibleGmailAttachments,args:[files.map(f=>f.name)]
+ });
+ if(!result?.ok)throw Error(result?.error||"Gmail Download all is unavailable.");
+ let detected=null;
+ for(let attempt=0;attempt<15;attempt++){
+  await sleep(300);
+  const current=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+  detected=current.find(item=>!known.has(item.id))||null;
+  if(detected)break;
+ }
+ if(!detected)throw Error("Gmail did not start the ZIP download.");
+ notice("Gmail ZIP download started · "+files.length+" attachment(s).");
+ return true;
+}
 async function requestZipPermissions(files){
  if(state.source==="gmail")return;
  const missing=files.filter(f=>!f.url);
@@ -504,9 +609,14 @@ async function downloadZipFiles(files){
  notice("Downloaded one ZIP archive: "+archiveName+" · "+entries.length+" file(s).");
 }
 $("download-zip").addEventListener("click",async()=>{
- const files=selectedFiles();if(!files.length)return;
+ const files=selectedFiles().length?selectedFiles():filtered();
+ if(files.length<2)return;
  state.busy=true;updateCount();
  try{
+  if(state.source==="gmail-visible"&&files.length===state.files.length){
+   await downloadNativeGmailZip(files);
+   return;
+  }
   await requestZipPermissions(files);
   await mustHaveLicense();
   await downloadZipFiles(files);
@@ -519,6 +629,10 @@ async function detectGmail(){
   $("gmail-controls").hidden=!tab?.url?.startsWith("https://mail.google.com/");
  }catch{}
 }
-refreshAccount();detectGmail();
+async function initialize(){
+ await Promise.allSettled([refreshAccount(),detectGmail()]);
+ await restoreScanState().catch(()=>false);
+}
+initialize();
 
 chrome.storage.local.get("batchsaveLastEmail").then(({batchsaveLastEmail})=>{if(!$("email").value&&batchsaveLastEmail)$("email").value=batchsaveLastEmail;}).catch(()=>{});

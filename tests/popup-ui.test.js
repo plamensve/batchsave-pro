@@ -46,7 +46,7 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
 test("main popup uses the available 600px height and a larger scrolling file list",()=>{
  assert.match(css,/width:620px/);
  assert.match(css,/height:600px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 auto;min-height:185px/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
 });
 test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
@@ -106,7 +106,7 @@ test("registration messaging does not claim an existing account was newly create
 });
 
 test("download button depends on selection and busy state, not cached license state",()=>{
- assert.match(js,/const count=state\.selected\.size,available=!state\.busy/);
+ assert.match(js,/const count=state\.selected\.size,visible=filtered\(\)\.length,available=!state\.busy/);
  assert.ok(!js.includes("available=!state.busy&&state.access"));
 });
 test("all multi-file sources are routed through ZIP planning",()=>{
@@ -140,7 +140,8 @@ test("premium popup design keeps core behavior controls and polished visual hook
  assert.match(js,/box\.dataset\.tone/);
 });
 test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP event paths",()=>{
- assert.match(js,/billingFunction\(fn\)/);
+ assert.match(js,/billingFunction\("create-checkout"\)/);
+ assert.match(js,/billingFunction\("billing-portal"\)/);
  assert.match(js,/downloadPlan\(files,state\.source\)/);
  assert.match(js,/downloadVisibleGmailAttachment/);
  assert.match(js,/downloadZipFiles\(files\)/);
@@ -155,7 +156,33 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/function vectorIcon\(/);
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
- assert.match(css,/min-height:185px/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
+});
+
+test("last scan is restored from session storage and full workspace can reopen it",()=>{
+ assert.match(js,/SCAN_STATE_KEY/);
+ assert.match(js,/makeScanSnapshot/);
+ assert.match(js,/restoreScanState\(\)/);
+ assert.match(js,/chrome\.storage\.session\.set/);
+ assert.match(js,/chrome\.windows\.create/);
+ assert.match(css,/html\.full-workspace/);
+});
+test("ZIP button can archive all visible files without manual selection",()=>{
+ assert.match(js,/const files=selectedFiles\(\)\.length\?selectedFiles\(\):filtered\(\)/);
+ assert.match(js,/ZIP all visible/);
+ assert.match(js,/downloadNativeGmailZip/);
+ assert.match(js,/downloadAllVisibleGmailAttachments/);
+});
+test("Stripe checkout shows an animated 3 2 1 launch state",()=>{
+ assert.match(js,/for\(const n of \[3,2,1\]\)/);
+ assert.match(js,/Opening Stripe · /);
+ assert.match(js,/billing-launching/);
+ assert.match(css,/@keyframes billingSweep/);
+});
+test("primary scan/download command bar is above the account panel",()=>{
+ const toolbar=html.indexOf('class="toolbar"'),account=html.indexOf('class="auth-panel"');
+ assert.ok(toolbar>0&&toolbar<account);
 });
