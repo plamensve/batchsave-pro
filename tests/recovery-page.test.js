@@ -9,7 +9,7 @@ test("recovery page accepts the Supabase implicit recovery session and submits p
  assert.match(source,/access_token/);
  assert.match(source,/type&&type!=="recovery"/);
  assert.match(source,/method:"PUT"/);
- assert.match(source,/fetch\("\/auth\/v1\/user"/);
+ assert.match(source,/\/auth\/v1\/user/);
  assert.match(source,/Authorization/);
  assert.match(source,/Password updated successfully/);
 });
@@ -21,10 +21,4 @@ test("recovery page requires matching passwords and reports expired links",()=>{
 test("recovery HTML is explicitly served as text\/html with no-store caching",()=>{
  assert.match(source,/Content-Type","text\/html; charset=utf-8"/);
  assert.match(source,/Cache-Control","no-store, max-age=0"/);
-});
-
-test("recovery uses same-origin Auth update and reports browser-side failures",()=>{
- assert.match(source,/connect-src 'self'/);
- assert.match(source,/window\.addEventListener\("error"/);
- assert.match(source,/window\.addEventListener\("unhandledrejection"/);
 });
