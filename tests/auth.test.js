@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {signIn,requestPasswordReset,signOut,session,accountUser} from "../src/services/auth.js";
+import {signOut,session,accountUser} from "../src/services/auth.js";
+import {signIn} from "../src/services/auth-login.js";
+import {requestPasswordReset,PASSWORD_RECOVERY_REDIRECT} from "../src/services/auth-recovery.js";
+import {readFileSync} from "node:fs";
 
 async function withMock(mockFetch,fn){
  const prevFetch=globalThis.fetch,prevChrome=globalThis.chrome;
@@ -39,8 +42,28 @@ test("password recovery submits a valid email-only request",async()=>{
  await withMock(async(url,options)=>{seen={url,options};return new Response("{}",{status:200});},async()=>{await requestPasswordReset("test@example.com");});
  assert.match(seen.url,/\/auth\/v1\/recover\?redirect_to=/);
  const target=new URL(seen.url);
- assert.equal(target.searchParams.get("redirect_to"),"https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/account-recovery");
+ assert.equal(target.searchParams.get("redirect_to"),PASSWORD_RECOVERY_REDIRECT);
  assert.deepEqual(JSON.parse(seen.options.body),{email:"test@example.com"});
+});
+
+test("password recovery cannot modify or clear an existing login session",async()=>{
+ await withMock(async()=>new Response("{}",{status:200}),async storage=>{
+  const active={access_token:"keep-me",refresh_token:"keep-refresh",expires_at:Math.floor(Date.now()/1000)+3600};
+  storage.set("batchsaveSession",active);
+  await requestPasswordReset("test@example.com");
+  assert.deepEqual(storage.get("batchsaveSession"),active);
+ });
+});
+test("login and recovery implementations are physically isolated",()=>{
+ const login=readFileSync(new URL("../src/services/auth-login.js",import.meta.url),"utf8");
+ const recovery=readFileSync(new URL("../src/services/auth-recovery.js",import.meta.url),"utf8");
+ const popup=readFileSync(new URL("../src/popup/popup.js",import.meta.url),"utf8");
+ assert.match(login,/grant_type=password/);
+ assert.ok(!login.includes("/auth/v1/recover"));
+ assert.match(recovery,/\/auth\/v1\/recover/);
+ assert.ok(!recovery.includes("batchsaveSession"));
+ assert.match(popup,/from "\.\.\/services\/auth-login\.js"/);
+ assert.match(popup,/from "\.\.\/services\/auth-recovery\.js"/);
 });
 test("session is removed on signout",async()=>{
  await withMock(async()=>new Response("{}",{status:200}),async store=>{

@@ -2,7 +2,9 @@ import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisib
 import {makeZip} from "../lib/zip.js";
 import {batchFolder,batchArchiveName} from "../lib/download-batch.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
-import {signUp,signIn,signOut,session,accountUser,entitlement,billingFunction,requestPasswordReset} from "../services/auth.js";
+import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
+import {signIn} from "../services/auth-login.js";
+import {requestPasswordReset} from "../services/auth-recovery.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
