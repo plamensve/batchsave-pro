@@ -29,13 +29,13 @@
     <span id="version" class="version">…</span>
    </div>
   </div>
-  <div id="header-account" class="header-account" hidden>
-   <span class="account-avatar" id="account-avatar">B</span>
-   <div id="account-details" class="account-info" hidden>
+  <div id="header-account" class="header-account-inline" hidden>
+   <div id="account-details" class="account-info-inline" hidden>
     <strong id="account-name">Account</strong>
+    <span class="account-separator" aria-hidden="true">·</span>
     <span id="account-email"></span>
    </div>
-   <div class="header-account-state">
+   <div class="header-account-state-inline">
     <div id="account-status" class="account-status"><svg class="status-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.3 2.4 4.8-5"/></svg><span class="account-status-text">Checking account…</span></div>
     <span id="account-license">Current plan: Checking…</span>
    </div>
@@ -101,6 +101,18 @@
  </section>
 
  <div id="main-workspace" class="main-workspace" hidden>
+  <nav id="workspace-tabs" class="workspace-tabs" aria-label="BatchSave workspace">
+   <button id="downloads-tab" class="workspace-tab active" type="button" data-panel="downloads-panel">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
+    <span>Downloads</span>
+   </button>
+   <button id="pdf-tools-tab" class="workspace-tab" type="button" data-panel="pdf-tools-panel">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h6"/></svg>
+    <span>PDF Tools</span>
+   </button>
+  </nav>
+
+  <section id="downloads-panel" class="workspace-panel downloads-panel">
  <section class="toolbar" aria-label="Main actions">
   <button id="scan" class="primary action-scan" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></svg><span>Scan this page</span></button>
   <button id="download" class="action-download" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg><span class="button-label">Download selected</span></button>
@@ -153,7 +165,59 @@
  <footer>
   <div id="status" class="notice" role="status"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.25h.01"/></svg><span class="notice-text">Files are processed locally in Chrome.</span></div>
  </footer>
+  </section>
 
+  <section id="pdf-tools-panel" class="workspace-panel pdf-tools-popup" hidden>
+   <div class="pdf-mode-tabs" role="tablist" aria-label="PDF operations">
+    <button id="pdf-images-mode" class="pdf-mode active" type="button" data-pdf-panel="pdf-images-panel">Images → PDF</button>
+    <button id="pdf-merge-mode" class="pdf-mode" type="button" data-pdf-panel="pdf-merge-panel">Merge PDF</button>
+    <button id="pdf-compress-mode" class="pdf-mode" type="button" data-pdf-panel="pdf-compress-panel">Compress PDF</button>
+   </div>
+
+   <div id="pdf-images-panel" class="pdf-operation-panel">
+    <label class="pdf-drop-zone" id="pdf-image-drop">
+     <input id="pdf-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple hidden>
+     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M12 11v6M9 14h6"/></svg>
+     <strong>Add images</strong>
+     <span>JPG, PNG, WebP, GIF or BMP · processed locally</span>
+    </label>
+    <div id="pdf-image-list" class="pdf-file-list"></div>
+    <div class="pdf-options">
+     <label>DPI<select id="pdf-image-dpi"><option>96</option><option selected>150</option><option>200</option><option>300</option></select></label>
+     <label>Quality<select id="pdf-image-quality"><option>70</option><option>80</option><option selected>88</option><option>95</option></select></label>
+     <button id="pdf-images-create" class="primary pdf-run" type="button" disabled>Create PDF</button>
+    </div>
+    <div id="pdf-images-status" class="pdf-status" hidden></div>
+   </div>
+
+   <div id="pdf-merge-panel" class="pdf-operation-panel" hidden>
+    <label class="pdf-drop-zone" id="pdf-merge-drop">
+     <input id="pdf-merge-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+     <strong>Add PDF documents</strong>
+     <span>Files are merged in the order shown below</span>
+    </label>
+    <div id="pdf-merge-list" class="pdf-file-list"></div>
+    <div class="pdf-options pdf-options-end">
+     <button id="pdf-merge-create" class="primary pdf-run" type="button" disabled>Merge and download</button>
+    </div>
+    <div id="pdf-merge-status" class="pdf-status" hidden></div>
+   </div>
+
+   <div id="pdf-compress-panel" class="pdf-operation-panel" hidden>
+    <label class="pdf-drop-zone" id="pdf-compress-drop">
+     <input id="pdf-compress-input" type="file" accept="application/pdf,.pdf" hidden>
+     <svg class="ui-icon pdf-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 14h8M10 11l2 3 2-3M10 17l2-3 2 3"/></svg>
+     <strong>Select a PDF</strong>
+     <span>Lossless structural optimization · original remains unchanged</span>
+    </label>
+    <div id="pdf-compress-file" class="pdf-file-list"></div>
+    <div class="pdf-options pdf-options-end">
+     <button id="pdf-compress-create" class="primary pdf-run" type="button" disabled>Optimize and download</button>
+    </div>
+    <div id="pdf-compress-status" class="pdf-status" hidden></div>
+   </div>
+  </section>
  </div>
 
  <div id="preview-dialog" class="preview-dialog" role="dialog" aria-modal="true" aria-label="File preview" hidden>
@@ -171,6 +235,7 @@
   </div>
  </div>
 </main>
+<script src="../vendor/pdf-lib.min.js"></script>
 <script type="module" src="./popup.js"></script>
 </body>
 </html>

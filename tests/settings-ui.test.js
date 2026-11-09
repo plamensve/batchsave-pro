@@ -11,10 +11,11 @@ test("Settings is registered as the Chrome options page",()=>{
  assert.equal(manifest.options_ui.page,"src/settings/index.html");
  assert.equal(manifest.options_ui.open_in_tab,true);
 });
-test("Settings centralizes account, tools and app information",()=>{
- for(const id of ["account-section","tools-section","about-section","password-form","new-password","confirm-password","manage-subscription"])
+test("Settings stays focused on account and application settings",()=>{
+ for(const id of ["account-section","about-section","password-form","new-password","confirm-password","manage-subscription"])
   assert.ok(html.includes('id="'+id+'"'),"missing Settings control "+id);
- assert.match(html,/PDF Tools/);
+ assert.ok(!html.includes('id="tools-section"'));
+ assert.ok(!html.includes("Open PDF Tools"));
  assert.match(html,/About & privacy/);
  assert.match(html,/Local file processing/);
  assert.match(html,/Gmail access/);

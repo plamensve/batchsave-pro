@@ -945,3 +945,108 @@ html.signed-out .auth-panel form{
  margin-top:1px;
  color:#2e69c9;
 }
+
+
+/* v0.12.0 — flat signed-in header + popup workspace tabs */
+.header-account-inline{
+ position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;
+ margin-top:8px;padding-top:7px;border-top:1px solid rgba(174,207,250,.20);
+ background:transparent;box-shadow:none;
+}
+.account-info-inline{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.account-info-inline strong{
+ max-width:170px;color:#fff;font-size:10.5px;font-weight:820;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.account-info-inline #account-email{
+ min-width:0;color:#cfe0fa;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.account-separator{color:rgba(215,231,255,.52);font-size:10px}
+.header-account-state-inline{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-shrink:0}
+.header-account-inline .account-status{
+ min-height:19px;padding:2px 6px;border:1px solid rgba(112,226,182,.18);
+ color:#dff8ee;background:rgba(18,139,98,.22);font-size:8px
+}
+.header-account-inline .status-svg{width:12px;height:12px;flex-basis:12px;color:#6ee0b2}
+.header-account-inline #account-license{
+ max-width:180px;margin:0;padding:2px 6px;border:1px solid rgba(161,198,246,.18);border-radius:999px;
+ color:#e9f3ff;background:rgba(12,40,82,.24);font-size:8px;font-weight:760;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.workspace-tabs{
+ display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:5px 12px 6px;padding:4px;flex:0 0 auto;
+ border:1px solid #d7e2f1;border-radius:12px;background:linear-gradient(180deg,#f7faff,#eef4fc);
+ box-shadow:inset 0 1px 0 #fff
+}
+.workspace-tab{
+ display:flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:7px 10px;
+ border:1px solid transparent;border-radius:9px;color:#54708f;background:transparent;font-size:10.5px;font-weight:820
+}
+.workspace-tab .ui-icon{width:16px;height:16px}
+.workspace-tab:not(.active):hover{color:#2459a8;border-color:#c9d9ef;background:#f8fbff}
+.workspace-tab.active{
+ color:#fff;border-color:#1c57d0;background:linear-gradient(135deg,#2b70ed,#174bc7);
+ box-shadow:0 5px 12px rgba(37,95,222,.18),inset 0 1px 0 rgba(255,255,255,.15)
+}
+.workspace-panel{flex:1 1 auto;min-height:0}
+.downloads-panel{display:flex;flex-direction:column;min-height:0}
+
+
+/* PDF tools inside popup */
+.pdf-tools-popup{overflow-y:auto;padding:0 12px 10px;scrollbar-width:thin}
+.pdf-mode-tabs{
+ position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+ padding:3px 0 7px;background:#f8fafd
+}
+.pdf-mode{
+ min-height:31px;padding:5px 7px;border:1px solid #d3dfef;border-radius:9px;
+ color:#536b8a;background:#fff;font-size:9.2px;font-weight:800
+}
+.pdf-mode.active{
+ color:#194da1;border-color:#9fc0ef;background:linear-gradient(180deg,#f4f8ff,#e8f1ff);
+ box-shadow:inset 0 1px 0 #fff
+}
+.pdf-operation-panel{min-height:0}
+.pdf-drop-zone{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:132px;padding:14px;
+ border:1.5px dashed #b7cbe8;border-radius:13px;color:#345d9b;
+ background:linear-gradient(180deg,#f9fbff,#f2f7fe);cursor:pointer;transition:.15s ease
+}
+.pdf-drop-zone:hover,.pdf-drop-zone.drag{border-color:#3b78e8;background:#ebf3ff}
+.pdf-drop-icon{width:30px!important;height:30px!important;color:#2c69df}
+.pdf-drop-zone strong{font-size:11.5px}
+.pdf-drop-zone span{font-size:8.8px;color:#788ba6;text-align:center}
+.pdf-file-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.pdf-file-row{
+ display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 8px;
+ border:1px solid #dde6f2;border-radius:10px;background:#fff
+}
+.pdf-file-index{
+ display:grid;place-items:center;width:26px;height:26px;border-radius:8px;
+ color:#255ebc;background:#edf4ff;font-size:9px;font-weight:850
+}
+.pdf-file-copy{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pdf-file-copy strong{font-size:9.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdf-file-copy span{font-size:8.3px;color:#7a899e}
+.pdf-row-actions{display:flex;gap:4px}
+.pdf-row-actions button{
+ display:grid;place-items:center;width:26px;height:26px;padding:0;border:1px solid #d3deed;border-radius:7px;
+ color:#4b6486;background:#fff;font-size:11px;font-weight:850
+}
+.pdf-row-actions button:hover{background:#eef4ff;border-color:#aec5e8}
+.pdf-row-actions .remove{color:#a73b49;border-color:#ebc9ce;background:#fff8f9}
+.pdf-options{
+ display:flex;align-items:end;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid #e3ebf5
+}
+.pdf-options label{display:flex;flex-direction:column;gap:3px;color:#576b87;font-size:8.5px;font-weight:800}
+.pdf-options select{
+ height:31px;min-width:76px;padding:0 7px;border:1px solid #cfdaea;border-radius:8px;
+ color:#2f4566;background:#fff;font-size:9px
+}
+.pdf-options-end{justify-content:flex-end}
+.pdf-run{margin-left:auto;min-height:33px;padding:6px 11px;border-radius:9px;font-size:9.5px;font-weight:820}
+.pdf-status{
+ margin-top:8px;padding:7px 9px;border:1px solid #cbdcf6;border-radius:9px;
+ color:#315278;background:#f3f8ff;font-size:9px;line-height:1.35
+}
+.pdf-status.error{color:#992e3c;border-color:#efb7bd;background:#fff2f3}
+.pdf-status.success{color:#146b4d;border-color:#a8dec8;background:#effbf5}

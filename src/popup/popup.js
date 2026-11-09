@@ -7,10 +7,26 @@ import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,is
 import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
 import {signIn} from "../services/auth-login.js";
 import {requestPasswordReset} from "../services/auth-recovery.js";
+import {initPopupPdfTools} from "./pdf-tools-panel.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
 $("settings").addEventListener("click",()=>chrome.runtime.openOptionsPage());
+
+function setWorkspaceTab(panelId){
+ const selected=panelId==="pdf-tools-panel"?"pdf-tools-panel":"downloads-panel";
+ for(const tab of document.querySelectorAll(".workspace-tab")){
+  const active=tab.dataset.panel===selected;
+  tab.classList.toggle("active",active);
+  tab.setAttribute("aria-selected",String(active));
+ }
+ $("downloads-panel").hidden=selected!=="downloads-panel";
+ $("pdf-tools-panel").hidden=selected!=="pdf-tools-panel";
+ chrome.storage.session.set({batchsaveWorkspaceTab:selected}).catch(()=>{});
+}
+for(const tab of document.querySelectorAll(".workspace-tab")){
+ tab.addEventListener("click",()=>setWorkspaceTab(tab.dataset.panel));
+}
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
@@ -277,7 +293,6 @@ function showFiles(files,source,context={}){
 function displayProfile(user,plan){
  const identity=user?.user_metadata?.full_name||user?.user_metadata?.name||user?.email?.split("@")[0]||"BatchSave account";
  $("account-name").textContent=identity;
- $("account-avatar").textContent=identity.trim().charAt(0).toUpperCase()||"B";
  $("account-email").textContent=user?.email||"Email unavailable";
  $("account-license").textContent="Current plan: "+(plan||"Unavailable");
  $("header-account").hidden=false;
@@ -706,8 +721,11 @@ async function detectGmail(){
  }catch{}
 }
 async function initialize(){
+ initPopupPdfTools({ensureAccess:mustHaveLicense});
  await Promise.allSettled([refreshAccount(),detectGmail()]);
  await restoreScanState().catch(()=>false);
+ const saved=await chrome.storage.session.get("batchsaveWorkspaceTab").catch(()=>({}));
+ setWorkspaceTab(saved.batchsaveWorkspaceTab||"downloads-panel");
 }
 initialize();
 

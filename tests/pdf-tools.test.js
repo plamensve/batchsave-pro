@@ -42,3 +42,12 @@ test("human-readable file sizes are stable",()=>{
  assert.equal(formatBytes(500),"500 B");
  assert.equal(formatBytes(2048),"2.0 KB");
 });
+
+test("popup PDF controller uses the same tested PDF core",()=>{
+ const js=readFileSync(new URL("../src/popup/pdf-tools-panel.js",import.meta.url),"utf8");
+ assert.match(js,/imagesToPdf/);
+ assert.match(js,/mergePdfFiles/);
+ assert.match(js,/optimizePdfFile/);
+ assert.match(js,/ensureAccess/);
+ assert.match(js,/chrome\.downloads\.download/);
+});
