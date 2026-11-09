@@ -123,6 +123,22 @@ function authFeedback(msg,kind="info"){
 }
 
 const passwordInput=$("password");
+let capsLockOn=false;
+for(const eventName of ["keydown","keyup"]){
+ passwordInput.addEventListener(eventName,event=>{
+  if(typeof event.getModifierState==="function")capsLockOn=event.getModifierState("CapsLock");
+ });
+}
+function passwordDiagnostics(secret){
+ const text=String(secret??"");
+ const count=[...text].length;
+ const issues=[];
+ if(/^\s|\s$/u.test(text))issues.push("leading or trailing whitespace");
+ if(/[\u200B-\u200D\u2060\uFEFF]/u.test(text))issues.push("an invisible Unicode character");
+ if(/[\u0000-\u001F\u007F-\u009F]/u.test(text))issues.push("a control character");
+ if(capsLockOn)issues.push("Caps Lock is on");
+ return {count,issues};
+}
 function clearPasswordInput(){
  passwordInput.value="";
  passwordInput.type="password";
@@ -369,14 +385,19 @@ $("auth-form").addEventListener("submit",async ev=>{
   await signIn(email,$("password").value);
   notice("Signed in successfully.");await refreshAccount();authFeedback("");
  }catch(e){
-  const bad=/invalid login credentials/i.test(e.message);
-  if(bad)passwordInput.focus();
-  authFeedback(
-   bad
-    ?"Email or password did not match. The password was kept in the field so you can verify it with the eye icon. If needed, use Send reset email."
-    :`Sign in failed: ${e.message}`,
-   "error"
-  );
+  const bad=e?.code==="invalid_credentials"||/invalid login credentials/i.test(e.message);
+  if(bad){
+   const diagnosis=passwordDiagnostics(passwordInput.value);
+   const issueText=diagnosis.issues.length?" Detected: "+diagnosis.issues.join(", ")+".":"";
+   passwordInput.focus();
+   authFeedback(
+    "Supabase rejected the exact "+diagnosis.count+"-character password sent. BatchSave does not trim or alter password characters."+issueText+
+    " If Chrome autofilled this field, clear it completely and type the current password again. You can use the eye icon to verify every character.",
+    "error"
+   );
+  }else{
+   authFeedback(`Sign in failed: ${e.message}`,"error");
+  }
  }finally{button.disabled=false;}
 });
 function openSignupForm(){
@@ -440,7 +461,17 @@ $("reset-password").addEventListener("click",async()=>{
   authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the NEWEST password reset email, set a new password, and wait for “Password updated successfully”. Then reopen BatchSave Pro, click the password field, and type the NEW password.","success");
   notice("Password reset email sent. Use the newest message.");
  }
- catch(e){authFeedback("Password reset request failed: "+e.message,"error");}
+ catch(e){
+  if(e?.code==="over_email_send_rate_limit"){
+   authFeedback("No reset email was sent. Supabase's built-in Auth email quota is exhausted (2 Auth emails per hour for the entire project). This limit can only be raised after custom SMTP or a Send Email Hook is configured.","error");
+  }else if(e?.code==="over_request_rate_limit"){
+   authFeedback("No reset email was sent because Supabase temporarily rate-limited Auth requests from this connection. Repeated clicks will not help; BatchSave will block rapid retries locally.","error");
+  }else if(e?.code==="local_recovery_cooldown"){
+   authFeedback("Reset request not sent: "+e.message,"error");
+  }else{
+   authFeedback("Password reset request failed: "+e.message,"error");
+  }
+ }
  finally{$("reset-password").disabled=false;}
 });
 $("logout").addEventListener("click",async()=>{
