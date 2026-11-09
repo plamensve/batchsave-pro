@@ -360,8 +360,10 @@ async function mustHaveLicense(){
   $("auth-form").hidden=false;
   throw Error("Sign in is required before downloading.");
  }
- const e=await entitlement();
- state.access=!!e?.access_granted;
+ const response=await chrome.runtime.sendMessage({type:"CHECK_LICENSE"});
+ if(!response?.ok)throw Error(response?.error||"License check failed.");
+ const e=response.entitlement;
+ state.access=!!response.access_granted;
  if(!state.access)throw Error("Your trial, tester access or subscription is not active.");
  return e;
 }
