@@ -113,3 +113,42 @@ export function diagnoseVisibleGmailAttachments(){
   return {cards:count(".aZo"),downloadDescriptors:count("[download_url]"),
     namedNodes:count("[data-attachment-id],[data-attachment-name]"),filenameLabels:count(".aV3,.aQy")};
 }
+
+
+export async function downloadAllVisibleGmailAttachments(expectedNames=[]) {
+  const wanted=new Set((expectedNames||[]).map(v=>String(v||"").trim()).filter(Boolean));
+  const visible=scanVisibleGmailAttachments();
+  if(!visible.length)return {ok:false,error:"No visible Gmail attachments found."};
+  if(wanted.size&&visible.some(item=>!wanted.has(item.name))){
+    return {ok:false,error:"Gmail native ZIP can only be used when all visible attachments are included."};
+  }
+
+  const textOf=el=>[
+    el.getAttribute?.("aria-label"),
+    el.getAttribute?.("data-tooltip"),
+    el.getAttribute?.("title"),
+    el.getAttribute?.("data-original-title")
+  ].filter(Boolean).join(" ").toLowerCase();
+  const downloadAllRe=/(download all|download all attachments|изтегли всички|свали всички|скачать все|herunterladen.*alle|télécharger.*tout|descargar.*todo)/i;
+
+  const scopes=[
+    document.querySelector(".nH.if"),
+    document.querySelector(".adn.ads"),
+    document.querySelector(".aHU"),
+    document.body
+  ].filter(Boolean);
+  let button=null;
+  for(const scope of scopes){
+    const candidates=[...scope.querySelectorAll("button,[role='button'],[aria-label],[data-tooltip],a[href]")];
+    button=candidates.find(el=>!el.disabled&&el.getAttribute?.("aria-disabled")!=="true"&&downloadAllRe.test(textOf(el)))||null;
+    if(button)break;
+  }
+  if(!button)return {ok:false,error:"Gmail's Download all attachments button was not found. Hover the attachment area and try again."};
+
+  try{
+    button.click();
+    return {ok:true,triggered:true};
+  }catch(error){
+    return {ok:false,error:"Gmail rejected Download all: "+error.message};
+  }
+}
