@@ -151,6 +151,43 @@ function filtered(){
   return show&&(!search||[f.name,f.subject||"",f.from||"",f.url||""].some(s=>s.toLowerCase().includes(search)));
  });
 }
+async function persistScanState(){
+ if(!state.files.length)return;
+ const snapshot=makeScanSnapshot({
+  files:state.files,
+  selected:[...state.selected],
+  source:state.source,
+  search:$("search").value,
+  type:$("type").value,
+  tabId:state.scanTabId,
+  tabUrl:state.scanTabUrl
+ });
+ await chrome.storage.session.set({[SCAN_STATE_KEY]:snapshot});
+}
+let persistTimer=null;
+function queuePersistScanState(){
+ clearTimeout(persistTimer);
+ persistTimer=setTimeout(()=>persistScanState().catch(()=>{}),60);
+}
+async function restoreScanState(){
+ const stored=await chrome.storage.session.get(SCAN_STATE_KEY);
+ const snapshot=stored[SCAN_STATE_KEY];
+ if(!snapshot)return false;
+ let tab=null;
+ try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
+ if(!canRestoreScanSnapshot(snapshot,{tabId:tab?.id??null,tabUrl:tab?.url||""}))return false;
+ state.files=snapshot.files;
+ state.source=snapshot.source;
+ state.selected=new Set(snapshot.selected||[]);
+ state.scanTabId=snapshot.tabId;
+ state.scanTabUrl=snapshot.tabUrl||"";
+ $("search").disabled=false;$("search").value=snapshot.search||"";
+ $("type").disabled=false;$("type").value=[...$("type").options].some(o=>o.value===snapshot.type)?snapshot.type:"relevant";
+ $("gmail-controls").hidden=!isEmail({source:state.source});
+ render();
+ notice("Restored the last scan · "+state.files.length+" file(s).");
+ return true;
+}
 function updateCount(){
  const count=state.selected.size,available=!state.busy;
  $("selected").textContent=count+" selected";
