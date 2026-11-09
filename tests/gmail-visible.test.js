@@ -110,3 +110,12 @@ test("visible Gmail scanner captures direct attachment URL when download_url exp
   assert.match(files[0].url,/^https:\/\/mail-attachment\.googleusercontent\.com\//);
  }finally{globalThis.document=old;}
 });
+
+test("native Gmail ZIP helper is self-contained for MAIN-world execution",()=>{
+ const source=readFileSync(new URL("../src/services/gmail-visible.js",import.meta.url),"utf8");
+ const start=source.indexOf("export async function downloadAllVisibleGmailAttachments");
+ assert.ok(start>=0);
+ const body=source.slice(start);
+ assert.match(body,/Download all attachments/);
+ assert.ok(!/scanVisibleGmailAttachments\(\)/.test(body));
+});
