@@ -46,7 +46,7 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
 test("main popup uses the available 600px height and a larger scrolling file list",()=>{
  assert.match(css,/width:620px/);
  assert.match(css,/height:600px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
 });
 test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
@@ -160,7 +160,7 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/function vectorIcon\(/);
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
  assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
@@ -216,4 +216,22 @@ test("billing actions are visually differentiated by purpose",()=>{
  assert.match(css,/\.billing-actions \.subscription-action/);
  assert.match(css,/\.billing-actions \.session-action/);
  assert.match(css,/color:#8c3443/);
+});
+
+test("inline scan feedback field is removed to expand results workspace",()=>{
+ assert.ok(!html.includes('id="scan-feedback"'));
+ assert.ok(!css.includes(".scan-feedback{"));
+ assert.ok(!js.includes('$("scan-feedback")'));
+});
+test("Clear results deletes current results and persisted scan session",()=>{
+ assert.ok(html.includes('id="clear-results"'));
+ assert.match(js,/\$\("clear-results"\)\.addEventListener\("click",async\(\)=>/);
+ assert.match(js,/state\.files=\[\]/);
+ assert.match(js,/state\.selected\.clear\(\)/);
+ assert.match(js,/chrome\.storage\.session\.remove\(SCAN_STATE_KEY\)/);
+ assert.match(js,/Scanned results cleared/);
+});
+test("results workspace receives the reclaimed vertical area",()=>{
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0/);
+ assert.match(css,/\.selection-actions\{display:flex;align-items:center;gap:7px;padding:0 12px 5px/);
 });
