@@ -17,7 +17,12 @@
     <p>Files and Gmail attachments</p>
    </div>
   </div>
-  <span id="version" class="version">…</span>
+  <div class="header-actions">
+   <button id="open-workspace" class="icon-button" type="button" title="Open full workspace" aria-label="Open full workspace">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H4a1 1 0 0 0-1 1v4M16 3h4a1 1 0 0 1 1 1v4M21 16v4a1 1 0 0 1-1 1h-4M8 21H4a1 1 0 0 1-1-1v-4"/><path d="M9 9h6v6H9z"/></svg>
+   </button>
+   <span id="version" class="version">…</span>
+  </div>
  </header>
 
  <section class="auth-panel" aria-label="Account">
@@ -88,7 +93,7 @@
  <section class="selection-actions" aria-label="File selection actions">
   <button id="select-all" class="mini-select select-all" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>Select all</span></button>
   <button id="clear-selection" class="mini-select clear-selection" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/></svg><span>Clear selection</span></button>
-  <button id="download-zip" class="mini-select zip-action" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l3 3v5M7 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M14 3v4h4M17 13v8m0 0 3-3m-3 3-3-3"/></svg><span>Download ZIP</span></button>
+  <button id="download-zip" class="mini-select zip-action" type="button" disabled><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l3 3v5M7 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M14 3v4h4M17 13v8m0 0 3-3m-3 3-3-3"/></svg><span class="zip-label">Download ZIP</span></button>
  </section>
 
  <section id="results" class="results" aria-live="polite">
