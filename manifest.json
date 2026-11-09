@@ -7,8 +7,7 @@
     "activeTab",
     "scripting",
     "downloads",
-    "storage",
-    "permissions"
+    "storage"
   ],
   "host_permissions": [
     "https://gcfyaaqqsqrjwujpymjz.supabase.co/*"
