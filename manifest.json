@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BatchSave Pro — Bulk File Downloader",
   "version": "1.0.0",
-  "description": "Download page files and photos in batches, save visible Gmail attachments, and use local PDF tools.",
+  "description": "Download page files and photos in batches, save visible Gmail attachments, and use local PDF tools in Chrome.",
   "permissions": [
     "activeTab",
     "scripting",
