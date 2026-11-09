@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {signUp,signOut,session,accountUser} from "../src/services/auth.js";
+import {signUp,signOut,session,accountUser,updatePassword} from "../src/services/auth.js";
 import {signIn} from "../src/services/auth-login.js";
 import {requestPasswordReset,PASSWORD_RECOVERY_REDIRECT} from "../src/services/auth-recovery.js";
 import {readFileSync} from "node:fs";
@@ -173,5 +173,26 @@ test("account creation validates name and password before network request",async
  await withMock(async()=>{throw Error("network should not be called");},async()=>{
   await assert.rejects(()=>signUp("user@example.com","short",{fullName:"User"}),/at least 8/);
   await assert.rejects(()=>signUp("user@example.com","StrongPass123!",{fullName:""}),/Full name is required/);
+ });
+});
+
+test("signed-in user can update password without mixing with recovery flow",async()=>{
+ let seen;
+ await withMock(async(url,options)=>{
+  seen={url,options};
+  return new Response(JSON.stringify({id:"user-1",email:"test@example.com"}),{status:200,headers:{"content-type":"application/json"}});
+ },async storage=>{
+  storage.set("batchsaveSession",{access_token:"good",refresh_token:"refresh",expires_at:Math.floor(Date.now()/1000)+3600,user:{id:"user-1",email:"test@example.com"}});
+  await updatePassword("NewStrongPass123!");
+  assert.match(seen.url,/\/auth\/v1\/user$/);
+  assert.equal(seen.options.method,"PUT");
+  assert.match(seen.options.headers.Authorization,/Bearer good/);
+  assert.deepEqual(JSON.parse(seen.options.body),{password:"NewStrongPass123!"});
+  assert.equal(storage.get("batchsaveSession").user.email,"test@example.com");
+ });
+});
+test("password update validates length before network request",async()=>{
+ await withMock(async()=>{throw Error("network should not be called");},async()=>{
+  await assert.rejects(()=>updatePassword("short"),/at least 8/);
  });
 });
