@@ -263,7 +263,7 @@ function showFiles(files,source,context={}){
  if(source==="gmail-visible"&&state.files.length===1)state.selected.add(fileKey(state.files[0]));
  $("search").disabled=false;$("search").value="";
  $("type").disabled=false;$("type").value="relevant";render();
- if(state.files.length)queuePersistScanState();
+ if(state.files.length)persistScanState().catch(()=>{});
  else chrome.storage.session.remove(SCAN_STATE_KEY).catch(()=>{});
 }
 function displayProfile(user,plan){
