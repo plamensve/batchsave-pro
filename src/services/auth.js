@@ -28,6 +28,14 @@ export async function signUp(email,password){
  return request("/auth/v1/signup?redirect_to="+encodeURIComponent(redirect),{method:"POST",body:JSON.stringify({email,password})});
 }
 export async function signOut(){await locked(()=>chrome.storage.local.remove(SESSION_KEY));}
+export async function acceptExternalSession(auth){
+ if(!auth?.access_token||!auth?.refresh_token)throw Error("Incomplete authentication session.");
+ const user=await request("/auth/v1/user",{headers:{Authorization:"Bearer "+auth.access_token}});
+ if(!user?.id||!user?.email)throw Error("Supabase did not return a valid user.");
+ const next=stamped({...auth,user});
+ await locked(()=>chrome.storage.local.set({[SESSION_KEY]:next}));
+ return next;
+}
 async function refreshStored(){
  const current=await stored();
  if(!current?.access_token)return null;
