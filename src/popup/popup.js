@@ -1,6 +1,7 @@
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {batchFolder,batchArchiveName} from "../lib/download-batch.js";
+import {downloadPlan} from "../lib/download-plan.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
 import {signIn} from "../services/auth-login.js";
@@ -370,10 +371,12 @@ function reportDownloadError(prefix,error){
  if(/sign in|required|license|trial|subscription|tester/i.test(msg))authFeedback(msg,"error");
 }
 $("download").addEventListener("click",async()=>{
- const files=selectedFiles();if(!files.length)return;
+ const files=selectedFiles();
+ const plan=downloadPlan(files,state.source);
+ if(plan.mode==="none")return;
  state.busy=true;updateCount();
  try{
-  if(files.length>1){
+  if(plan.mode==="zip"){
    await requestZipPermissions(files);
    await mustHaveLicense();
    await downloadZipFiles(files);
@@ -381,60 +384,51 @@ $("download").addEventListener("click",async()=>{
   }
   await mustHaveLicense();
 
-  if(state.source==="gmail-visible"){
+  if(plan.mode==="gmail-visible-single"){
    const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
    if(!tab?.url?.startsWith("https://mail.google.com/"))throw Error("Open the Gmail message again.");
-   const folder=batchFolder();
-   let confirmed=0,unrouted=0;
-   for(const f of files){
-    notice("Preparing "+f.name+" in Downloads/"+folder+"…");
-    const prior=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
-    const known=new Set(prior.map(item=>item.id));
-    const prep=await chrome.runtime.sendMessage({
-     type:"PREPARE_GMAIL_DOWNLOAD",folder,expectedName:f.name
+   const f=files[0],folder=batchFolder();
+   notice("Preparing "+f.name+" in Downloads/"+folder+"…");
+   const prior=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+   const known=new Set(prior.map(item=>item.id));
+   const prep=await chrome.runtime.sendMessage({type:"PREPARE_GMAIL_DOWNLOAD",folder,expectedName:f.name});
+   if(!prep?.ok)throw Error(prep?.error||"Cannot prepare Gmail destination folder.");
+   try{
+    const [{result}]=await chrome.scripting.executeScript({
+     target:{tabId:tab.id},world:"MAIN",func:downloadVisibleGmailAttachment,args:[f.position,f.name]
     });
-    if(!prep?.ok)throw Error(prep?.error||"Cannot prepare Gmail destination folder.");
-    try{
-     const [{result}]=await chrome.scripting.executeScript({
-      target:{tabId:tab.id},world:"MAIN",func:downloadVisibleGmailAttachment,
-      args:[f.position,f.name]
-     });
-     if(!result?.ok)throw Error(result?.error||"Gmail download is unavailable");
-     let detected=null,renamed=false;
-     for(let attempt=0;attempt<12;attempt++){
-      await new Promise(resolve=>setTimeout(resolve,350));
-      const current=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
-      detected=current.find(item=>!known.has(item.id))||null;
-      const routing=await chrome.runtime.sendMessage({type:"GET_GMAIL_FOLDER_STATE"});
-      renamed=!!(routing?.handled&&routing.downloadId===detected?.id);
-      if(detected&&renamed)break;
-     }
-     if(!detected)throw Error("Chrome did not start a download for "+f.name+". The Gmail Download control may be blocked.");
-     confirmed++;
-     if(!renamed)unrouted++;
-     notice("Chrome started "+confirmed+"/"+files.length+" download(s).");
-    }finally{
-     await chrome.runtime.sendMessage({type:"CLEAR_GMAIL_FOLDER"}).catch(()=>{});
+    if(!result?.ok)throw Error(result?.error||"Gmail download is unavailable");
+    let detected=null,renamed=false;
+    for(let attempt=0;attempt<12;attempt++){
+     await new Promise(resolve=>setTimeout(resolve,350));
+     const current=await chrome.downloads.search({limit:100,orderBy:["-startTime"]});
+     detected=current.find(item=>!known.has(item.id))||null;
+     const routing=await chrome.runtime.sendMessage({type:"GET_GMAIL_FOLDER_STATE"});
+     renamed=!!(routing?.handled&&routing.downloadId===detected?.id);
+     if(detected&&renamed)break;
     }
+    if(!detected)throw Error("Chrome did not start a download for "+f.name+".");
+    notice(renamed?"Downloaded "+f.name+" to Downloads/"+folder+".":"Chrome started "+f.name+". Check Chrome Downloads.");
+   }finally{
+    await chrome.runtime.sendMessage({type:"CLEAR_GMAIL_FOLDER"}).catch(()=>{});
    }
-   notice(unrouted
-    ?confirmed+" download(s) started, but "+unrouted+" could not be placed in the common folder. Check Chrome Downloads."
-    :confirmed+" download(s) started in Downloads/"+folder+".");
-  }else if(state.source==="gmail"){
-   const folder=batchFolder();
-   let completed=0;
-   for(const f of files){
-    notice("Downloading Gmail attachment "+(completed+1)+"/"+files.length+"…");
-    const bytes=await readGmailAttachment(f);
-    await saveBlob(new Blob([bytes],{type:f.mimeType||"application/octet-stream"}),folder+"/"+safeName(f.name));
-    completed++;
-   }
-   notice("Started "+completed+" Gmail downloads in Downloads/"+folder+".");
-  }else{
-   const response=await chrome.runtime.sendMessage({type:"BATCH_DOWNLOAD",items:files.map(f=>({url:f.url,filename:f.name}))});
-   if(!response?.ok)throw Error(response?.error||"Download failed");
-   notice("Started "+response.started+" downloads in Downloads/"+response.folder+(response.failed?" · "+response.failed+" failed":"")+".");
+   return;
   }
+
+  if(plan.mode==="gmail-api-single"){
+   const f=files[0],folder=batchFolder();
+   notice("Downloading Gmail attachment: "+f.name);
+   const bytes=await readGmailAttachment(f);
+   await saveBlob(new Blob([bytes],{type:f.mimeType||"application/octet-stream"}),folder+"/"+safeName(f.name));
+   notice("Started Gmail download in Downloads/"+folder+".");
+   return;
+  }
+
+  const response=await chrome.runtime.sendMessage({
+   type:"BATCH_DOWNLOAD",items:files.map(f=>({url:f.url,filename:f.name}))
+  });
+  if(!response?.ok)throw Error(response?.error||response?.errors?.[0]||"Download failed");
+  notice("Started "+response.started+" download(s) in Downloads/"+response.folder+(response.failed?" · "+response.failed+" failed":"")+".");
  }catch(e){reportDownloadError("Download failed",e);}
  finally{state.busy=false;updateCount();}
 });
