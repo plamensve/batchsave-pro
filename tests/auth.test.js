@@ -139,3 +139,9 @@ test("login module remains independent from password recovery implementation",()
  assert.match(executable,/\/auth\/v1\/token\?grant_type=password/);
  assert.ok(!/\/auth\/v1\/recover|account-recovery|auth-recovery\.js/i.test(executable));
 });
+
+test("billing errors include missing backend secret names in the surfaced message",()=>{
+ const source=readFileSync(new URL("../src/services/auth.js",import.meta.url),"utf8");
+ assert.match(source,/payload\.missing/);
+ assert.match(source,/Missing:/);
+});
