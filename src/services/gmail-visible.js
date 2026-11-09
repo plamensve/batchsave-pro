@@ -116,12 +116,8 @@ export function diagnoseVisibleGmailAttachments(){
 
 
 export async function downloadAllVisibleGmailAttachments(expectedNames=[]) {
-  const wanted=new Set((expectedNames||[]).map(v=>String(v||"").trim()).filter(Boolean));
-  const visible=scanVisibleGmailAttachments();
-  if(!visible.length)return {ok:false,error:"No visible Gmail attachments found."};
-  if(wanted.size&&visible.some(item=>!wanted.has(item.name))){
-    return {ok:false,error:"Gmail native ZIP can only be used when all visible attachments are included."};
-  }
+  const names=(expectedNames||[]).map(v=>String(v||"").trim()).filter(Boolean);
+  if(names.length<2)return {ok:false,error:"Select at least two Gmail attachments for ZIP download."};
 
   const textOf=el=>[
     el.getAttribute?.("aria-label"),
