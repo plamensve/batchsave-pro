@@ -70,8 +70,9 @@ test("all scanned files expose preview controls; images and PDFs have rich previ
  assert.match(css,/\.preview-dialog/);
  assert.match(css,/\.preview-details/);
 });
-test("multiple selected page and Gmail API files are routed to a single ZIP",()=>{
- assert.match(js,/if\(files\.length>1&&state\.source!=="gmail-visible"\)\{/);
+test("multiple selected files are routed to a single ZIP through the download plan",()=>{
+ assert.match(js,/const plan=downloadPlan\(files,state\.source\)/);
+ assert.match(js,/if\(plan\.mode==="zip"\)\{/);
  assert.match(js,/await downloadZipFiles\(files\);\s*return;/);
  assert.match(js,/const archiveName=batchArchiveName\(\)/);
  assert.match(js,/await saveBlob\(makeZip\(entries\),archiveName,false\)/);
@@ -85,11 +86,11 @@ test("password reset UI cannot leave the stale password in the field",()=>{
  assert.match(js,/Password updated successfully/);
 });
 test("multi-select primary download exits through ZIP before any individual-download route",()=>{
- const multi=js.indexOf('if(files.length>1&&state.source!=="gmail-visible")');
- const zip=js.indexOf("await downloadZipFiles(files);",multi);
+ const plan=js.indexOf('if(plan.mode==="zip")');
+ const zip=js.indexOf("await downloadZipFiles(files);",plan);
  const exit=js.indexOf("return;",zip);
- const batch=js.indexOf('type:"BATCH_DOWNLOAD"',multi);
- assert.ok(multi>=0&&zip>multi&&exit>zip&&batch>exit);
+ const batch=js.indexOf('type:"BATCH_DOWNLOAD"',plan);
+ assert.ok(plan>=0&&zip>plan&&exit>zip&&batch>exit);
 });
 
 test("password field blocks stale autofill and clears invalid credentials",()=>{
@@ -102,4 +103,20 @@ test("registration messaging does not claim an existing account was newly create
  assert.ok(!js.includes("Account created. Confirm your email"));
  assert.match(js,/If this email is new/);
  assert.match(js,/already have an account/);
+});
+
+test("download button depends on selection and busy state, not cached license state",()=>{
+ assert.match(js,/const count=state\.selected\.size,available=!state\.busy/);
+ assert.ok(!js.includes("available=!state.busy&&state.access"));
+});
+test("all multi-file sources are routed through ZIP planning",()=>{
+ assert.match(js,/const plan=downloadPlan\(files,state\.source\)/);
+ assert.match(js,/if\(plan\.mode==="zip"\)/);
+ assert.ok(!js.includes('files.length>1&&state.source!=="gmail-visible"'));
+});
+test("license validation happens at click time and surfaces sign-in requirements",()=>{
+ assert.match(js,/const activeSession=await session\(\)/);
+ assert.match(js,/type:"CHECK_LICENSE"/);
+ assert.match(js,/Sign in is required before downloading/);
+ assert.match(js,/reportDownloadError/);
 });

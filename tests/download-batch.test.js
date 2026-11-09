@@ -36,7 +36,17 @@ test("download routing has explicit scope and preserves other download requests"
  assert.match(worker,/if\(!matchesGmailIntent\(item,intent\)\)\{\s*suggest\(\);return;/);
  assert.match(worker,/suggest\(\{filename:intent\.folder/);
  assert.match(worker,/chrome\.storage\.session\.set/);
+ assert.match(worker,/CHECK_LICENSE/);
+ assert.match(worker,/checkedEntitlement/);
  assert.match(worker,/PREPARE_GMAIL_DOWNLOAD/);
  assert.match(worker,/BATCH_DOWNLOAD/);
  assert.match(worker,/batchFolder\(\)/);
+});
+
+test("license checks are centralized and briefly cached to avoid duplicate network gating",()=>{
+ const worker=readFileSync(new URL("../src/background/service-worker.js",import.meta.url),"utf8");
+ assert.match(worker,/let licenseCache=null/);
+ assert.match(worker,/Date\.now\(\)<licenseCache\.expiresAt/);
+ assert.match(worker,/expiresAt:Date\.now\(\)\+5000/);
+ assert.match(worker,/message\?\.type==="CHECK_LICENSE"/);
 });
