@@ -46,7 +46,7 @@ test("popup shows logged-in account identity and confirms Chrome downloads",()=>
 test("main popup uses the available 600px height and a larger scrolling file list",()=>{
  assert.match(css,/width:620px/);
  assert.match(css,/height:600px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
 });
 test("account identity and plan are clearly labeled",()=>{
  assert.match(js,/Current plan:/);
@@ -160,7 +160,7 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/function vectorIcon\(/);
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
- assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/\.results\{margin:0 12px 3px;flex:1 1 0;min-height:0/);
  assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
