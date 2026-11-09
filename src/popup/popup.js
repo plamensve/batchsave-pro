@@ -10,6 +10,7 @@ import {requestPasswordReset} from "../services/auth-recovery.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
+$("settings").addEventListener("click",()=>chrome.runtime.openOptionsPage());
 const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
@@ -277,22 +278,34 @@ function displayProfile(user,plan){
  $("account-avatar").textContent=identity.trim().charAt(0).toUpperCase()||"B";
  $("account-email").textContent=user?.email||"Email unavailable";
  $("account-license").textContent="Current plan: "+(plan||"Unavailable");
+ $("header-account").hidden=false;
  $("account-details").hidden=false;
 }
 async function refreshAccount(){
- $("auth-form").hidden=true;$("signup-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;$("logout").hidden=true;
+ const root=document.documentElement;
+ root.classList.remove("signed-out","signup-open");
+ $("auth-panel").classList.remove("session-active");
+ $("auth-form").hidden=true;$("signup-form").hidden=true;$("billing-actions").hidden=true;
+ $("account-details").hidden=true;$("header-account").hidden=true;
+ $("logout").hidden=true;$("settings").hidden=true;$("main-workspace").hidden=true;
  let s;
  try{
   s=await session();
  }catch(e){
-  state.access=false;message("Connection issue. Your login is saved; refresh when online.");
+  state.access=false;
+  root.classList.add("signed-out");
+  $("auth-form").hidden=false;
+  authFeedback("Connection issue. Your saved login could not be verified. Try again when online.","error");
   updateCount();return;
  }
  if(!s){
-  state.access=false;message("Sign in to manage downloads and your trial.");
-  $("auth-form").hidden=false;updateCount();return;
+  state.access=false;
+  root.classList.add("signed-out");
+  $("auth-form").hidden=false;
+  updateCount();return;
  }
- $("logout").hidden=false;
+ $("auth-panel").classList.add("session-active");
+ $("logout").hidden=false;$("settings").hidden=false;$("main-workspace").hidden=false;
  const current=await accountUser().catch(()=>s.user||null);
  try{
   const info=await entitlement();
@@ -354,6 +367,7 @@ $("auth-form").addEventListener("submit",async ev=>{
 });
 function openSignupForm(){
  const email=$("email").value.trim();
+ document.documentElement.classList.add("signup-open");
  $("auth-form").hidden=true;
  $("signup-form").hidden=false;
  $("signup-email").value=email;
@@ -363,6 +377,7 @@ function openSignupForm(){
  $("signup-name").focus();
 }
 function closeSignupForm(){
+ document.documentElement.classList.remove("signup-open");
  $("signup-form").hidden=true;
  $("auth-form").hidden=false;
  if($("signup-email").value.trim())$("email").value=$("signup-email").value.trim();
@@ -390,6 +405,7 @@ $("signup-form").addEventListener("submit",async event=>{
   await chrome.storage.local.set({batchsaveLastEmail:email.trim().toLowerCase()});
   $("email").value=email.trim().toLowerCase();
   $("signup-password").value="";$("signup-confirm").value="";
+  document.documentElement.classList.remove("signup-open");
   $("signup-form").hidden=true;$("auth-form").hidden=false;
   lockPasswordInput();
   authFeedback("Account creation request accepted. Check your email and confirm the account, then sign in with your password.","success");

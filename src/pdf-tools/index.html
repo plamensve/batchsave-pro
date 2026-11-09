@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>BatchSave Pro — PDF Tools</title>
+ <link rel="stylesheet" href="./pdf-tools.css">
+</head>
+<body>
+<main class="pdf-shell">
+ <header class="topbar">
+  <div class="brand"><span class="mark">B</span><div><strong>BatchSave <em>Pro</em></strong><span>PDF Tools</span></div></div>
+  <div class="top-actions"><a href="../settings/index.html">Settings</a><span id="version"></span></div>
+ </header>
+
+ <section class="hero">
+  <span class="eyebrow">Local document tools</span>
+  <h1>PDF Tools</h1>
+  <p>Convert images, merge PDFs and optimize PDF size directly in Chrome. Files are processed locally.</p>
+ </section>
+
+ <nav class="tabs" aria-label="PDF tools">
+  <button class="tab active" data-panel="images-panel">Images → PDF</button>
+  <button class="tab" data-panel="merge-panel">Merge PDF</button>
+  <button class="tab" data-panel="compress-panel">Compress PDF</button>
+ </nav>
+
+ <section id="images-panel" class="panel">
+  <div class="panel-heading"><div><h2>Images → PDF</h2><p>Each selected image becomes a PDF page in the order shown below.</p></div><span class="local-badge">Local processing</span></div>
+  <label class="drop-zone" id="image-drop">
+   <input id="image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple hidden>
+   <svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M12 11v6M9 14h6"/></svg>
+   <strong>Add images</strong><span>Click or drop JPG, PNG, WebP, GIF or BMP files</span>
+  </label>
+  <div id="image-list" class="file-list"></div>
+  <div class="options-row">
+   <label>DPI<select id="image-dpi"><option>96</option><option selected>150</option><option>200</option><option>300</option></select></label>
+   <label>Quality<select id="image-quality"><option>70</option><option>80</option><option selected>88</option><option>95</option></select></label>
+   <button id="images-create" class="primary" type="button">Create PDF</button>
+  </div>
+  <div id="images-status" class="status" hidden></div>
+ </section>
+
+ <section id="merge-panel" class="panel" hidden>
+  <div class="panel-heading"><div><h2>Merge PDF</h2><p>Merge complete PDF documents in the exact order shown below while preserving vector text and pages.</p></div><span class="local-badge">No upload</span></div>
+  <label class="drop-zone" id="merge-drop">
+   <input id="merge-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+   <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+   <strong>Add PDF documents</strong><span>Click or drop multiple PDF files, then reorder if needed</span>
+  </label>
+  <div id="merge-list" class="file-list"></div>
+  <div class="options-row end"><button id="merge-create" class="primary" type="button">Merge and download</button></div>
+  <div id="merge-status" class="status" hidden></div>
+ </section>
+
+ <section id="compress-panel" class="panel" hidden>
+  <div class="panel-heading"><div><h2>Compress PDF</h2><p>Lossless structural optimization that preserves pages, text and vectors. Already optimized PDFs may not become smaller.</p></div><span class="local-badge">Safe optimization</span></div>
+  <label class="drop-zone" id="compress-drop">
+   <input id="compress-input" type="file" accept="application/pdf,.pdf" hidden>
+   <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 14h8M10 11l2 3 2-3M10 17l2-3 2 3"/></svg>
+   <strong>Select a PDF</strong><span>Original file stays unchanged</span>
+  </label>
+  <div id="compress-file" class="file-list"></div>
+  <div class="options-row end"><button id="compress-create" class="primary" type="button">Optimize and download</button></div>
+  <div id="compress-status" class="status" hidden></div>
+ </section>
+</main>
+<script src="../vendor/pdf-lib.min.js"></script>
+<script type="module" src="./pdf-tools.js"></script>
+</body>
+</html>

@@ -88,6 +88,22 @@ export async function entitlement(){
  });
  return Array.isArray(result)?result[0]||null:result;
 }
+export async function updatePassword(newPassword){
+ const secret=String(newPassword??"");
+ if(secret.length<8)throw Error("Password must be at least 8 characters.");
+ const current=await session();
+ if(!current)throw Error("Sign in first.");
+ const user=await request("/auth/v1/user",{
+  method:"PUT",
+  headers:{Authorization:"Bearer "+current.access_token},
+  body:JSON.stringify({password:secret})
+ });
+ const storedSession=await stored();
+ if(storedSession?.access_token){
+  await chrome.storage.local.set({[SESSION_KEY]:{...storedSession,user:user?.id?user:storedSession.user}});
+ }
+ return user;
+}
 export async function billingFunction(name){
  const s=await session();if(!s)throw Error("Sign in first.");
  const result=await request("/functions/v1/"+name,{

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BatchSave Pro — Bulk File Downloader",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Download real page files, photos and Gmail email attachments in batches.",
   "permissions": [
     "activeTab",
@@ -33,5 +33,9 @@
     "scopes": [
       "https://www.googleapis.com/auth/gmail.readonly"
     ]
+  },
+  "options_ui": {
+    "page": "src/settings/index.html",
+    "open_in_tab": true
   }
 }
