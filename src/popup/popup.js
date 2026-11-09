@@ -174,7 +174,11 @@ async function restoreScanState(){
  const snapshot=stored[SCAN_STATE_KEY];
  if(!snapshot)return false;
  let tab=null;
- try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
+ if(fullWorkspace&&snapshot.source==="gmail-visible"&&Number.isInteger(snapshot.tabId)){
+  try{tab=await chrome.tabs.get(snapshot.tabId);}catch{}
+ }else{
+  try{[tab]=await chrome.tabs.query({active:true,currentWindow:true});}catch{}
+ }
  if(!canRestoreScanSnapshot(snapshot,{tabId:tab?.id??null,tabUrl:tab?.url||""}))return false;
  state.files=snapshot.files;
  state.source=snapshot.source;
