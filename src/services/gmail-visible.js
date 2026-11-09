@@ -35,8 +35,13 @@ export function scanVisibleGmailAttachments() {
     if(!card||card.isConnected===false||seen.has(card))continue;
     const name=filename(node,card);
     if(!name)continue;
+    const raw=card.getAttribute?.("download_url")||
+      card.querySelector?.("[download_url]")?.getAttribute?.("download_url")||
+      node.getAttribute?.("download_url")||"";
+    const urlMatch=raw.match(/https?:\/\/.+$/i);
+    const url=urlMatch?.[0]||"";
     seen.add(card);
-    results.push({id:"visible:"+index,source:"gmail-visible",kind:"attachment",name,subject,position:index});
+    results.push({id:"visible:"+index,source:"gmail-visible",kind:"attachment",name,subject,position:index,url});
   }
   return results;
 }
