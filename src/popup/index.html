@@ -9,9 +9,9 @@
   <div class="account-info"><strong id="account-name">Account</strong><span id="account-email"></span><span id="account-license"></span></div>
  </div>
  <div id="auth-feedback" class="auth-feedback" role="status" aria-live="assertive" hidden></div>
- <form id="auth-form" hidden>
+ <form id="auth-form" hidden autocomplete="off">
   <input id="email" type="email" placeholder="Email address" autocomplete="email" required aria-label="Account email">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required aria-label="Account password">
+  <input id="password" type="password" placeholder="Password" autocomplete="off" minlength="6" required aria-label="Account password">
   <div class="auth-actions"><button id="login" class="secondary" type="submit">Sign in</button><button id="register" class="secondary" type="button">Create account</button><button id="reset-password" class="secondary" type="button">Send reset email</button></div>
  </form>
  <div class="auth-actions" id="billing-actions" hidden><button id="upgrade" class="primary" type="button">Start trial · €9.90/month</button><button id="manage" class="secondary" type="button" hidden>Billing</button><button id="logout" class="secondary" type="button">Sign out</button></div>
@@ -31,10 +31,15 @@
 </section>
 <section id="results" class="results" aria-live="polite"><div class="empty">Open a page or Gmail and click Scan this page.</div></section>
 <footer><div id="status" class="notice" role="status">Files are processed locally in Chrome.</div></footer>
-<div id="preview-dialog" class="preview-dialog" role="dialog" aria-modal="true" aria-label="Image preview" hidden>
+<div id="preview-dialog" class="preview-dialog" role="dialog" aria-modal="true" aria-label="File preview" hidden>
  <div class="preview-card">
-  <div class="preview-heading"><strong id="preview-title">Image preview</strong><button id="preview-close" type="button" aria-label="Close preview">✕</button></div>
-  <div class="preview-body"><img id="preview-image" alt="Selected image preview"><p id="preview-error" hidden>Preview is unavailable for this image.</p></div>
+  <div class="preview-heading"><strong id="preview-title">File preview</strong><button id="preview-close" type="button" aria-label="Close preview">✕</button></div>
+  <div class="preview-body">
+   <img id="preview-image" alt="Selected image preview" hidden>
+   <iframe id="preview-frame" title="Selected PDF preview" hidden></iframe>
+   <div id="preview-details" class="preview-details" hidden></div>
+   <p id="preview-error" hidden>Preview is unavailable for this file.</p>
+  </div>
  </div>
 </div>
 </main><script type="module" src="./popup.js"></script></body></html>
