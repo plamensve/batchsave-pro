@@ -94,7 +94,12 @@ passwordInput.addEventListener("pointerdown",unlockPasswordInput,{once:true});
 passwordInput.addEventListener("focus",unlockPasswordInput,{once:true});
 setTimeout(()=>{if(passwordInput.readOnly)passwordInput.value="";},0);
 
-function message(msg){$("account-status").textContent=msg;}
+function message(msg){
+ const box=$("account-status");
+ box.textContent=msg;
+ box.dataset.tone=/Tester access active|Trial|Pro active|Signed in/i.test(msg)?"success":
+   /required|failed|unavailable/i.test(msg)?"warning":"info";
+}
 function typeOf(f){
  if(isEmail(f)){
   if(f.mimeType?.startsWith("image/"))return "image";
@@ -164,7 +169,11 @@ function render(){
    trigger.append(symbol);
   }
   trigger.addEventListener("click",()=>openPreview(f,trigger));
-  row.append(checkbox,trigger,meta);
+  const badge=document.createElement("span");
+  badge.className="file-type-badge";
+  const ext=(f.name?.match(/\.([a-z0-9]{1,6})$/i)?.[1]||typeOf(f)||"FILE").toUpperCase();
+  badge.textContent=ext==="ATTACHMENT"?"FILE":ext;
+  row.append(checkbox,trigger,meta,badge);
   target.append(row);
  }
  $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
