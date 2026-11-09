@@ -1,19 +1,17 @@
 {
   "manifest_version": 3,
   "name": "BatchSave Pro — Bulk File Downloader",
-  "version": "0.12.7",
-  "description": "Download real page files, photos and Gmail email attachments in batches.",
+  "version": "1.0.0",
+  "description": "Download page files and photos in batches, save visible Gmail attachments, and use local PDF tools.",
   "permissions": [
     "activeTab",
     "scripting",
     "downloads",
     "storage",
-    "permissions",
-    "identity"
+    "permissions"
   ],
   "host_permissions": [
-    "https://gcfyaaqqsqrjwujpymjz.supabase.co/*",
-    "https://gmail.googleapis.com/*"
+    "https://gcfyaaqqsqrjwujpymjz.supabase.co/*"
   ],
   "action": {
     "default_title": "BatchSave Pro",
@@ -32,12 +30,6 @@
     "http://*/*",
     "https://*/*"
   ],
-  "oauth2": {
-    "client_id": "000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/gmail.readonly"
-    ]
-  },
   "options_ui": {
     "page": "src/settings/index.html",
     "open_in_tab": true
@@ -47,6 +39,6 @@
     "32": "src/assets/icon-32.png",
     "48": "src/assets/icon-48.png",
     "128": "src/assets/icon-128.png"
-  }
+  },
+  "homepage_url": "https://batchsavepro.com/"
 }
-
