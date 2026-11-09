@@ -1,7 +1,8 @@
-import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
+import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment,downloadAllVisibleGmailAttachments,diagnoseVisibleGmailAttachments} from "../services/gmail-visible.js";
 import {makeZip} from "../lib/zip.js";
 import {batchFolder,batchArchiveName} from "../lib/download-batch.js";
 import {downloadPlan} from "../lib/download-plan.js";
+import {SCAN_STATE_KEY,makeScanSnapshot,canRestoreScanSnapshot} from "../lib/scan-state.js";
 import {classifyFile,filenameFromUrl,uniqueFiles,collectFromPage,isUsefulFile,isMeaningfulImage} from "../lib/files.js";
 import {signUp,signOut,session,accountUser,entitlement,billingFunction} from "../services/auth.js";
 import {signIn} from "../services/auth-login.js";
@@ -9,7 +10,16 @@ import {requestPasswordReset} from "../services/auth-recovery.js";
 import {configuredForGmail,gmailToken,listGmailAttachments,readGmailAttachment} from "../services/gmail.js";
 const $=id=>document.getElementById(id);
 $("version").textContent="v"+chrome.runtime.getManifest().version;
-const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false};
+const fullWorkspace=new URLSearchParams(location.search).get("full")==="1";
+document.documentElement.classList.toggle("full-workspace",fullWorkspace);
+$("open-workspace").hidden=fullWorkspace;
+$("open-workspace").addEventListener("click",async()=>{
+ await chrome.windows.create({
+  url:chrome.runtime.getURL("src/popup/index.html?full=1"),
+  type:"popup",focused:true,width:780,height:840
+ });
+});
+const state={files:[],selected:new Set(),source:"page",access:false,busy:false,googleReady:false,scanTabId:null,scanTabUrl:""};
 const SIZE_LIMIT=100*1024*1024;
 const fileKey=f=>f.id||f.url;
 const isEmail=f=>f.source==="gmail"||f.source==="gmail-visible";
