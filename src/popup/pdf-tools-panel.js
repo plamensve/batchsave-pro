@@ -35,28 +35,62 @@ export function initPopupPdfTools({ensureAccess}={}){
   });
   zone.addEventListener("drop",event=>onFiles([...event.dataTransfer.files]));
  }
- function row(file,index,total,onMove,onRemove,detail){
-  const el=document.createElement("div");el.className="pdf-file-row";
-  const number=document.createElement("span");number.className="pdf-file-index";number.textContent=index+1;
-  const copy=document.createElement("div");copy.className="pdf-file-copy";
-  const name=document.createElement("strong");name.textContent=file.name;
+ function syncWorkspace(workspaceId,zoneId,count,emptyLabel,filledLabel){
+  const workspace=$(workspaceId),zone=$(zoneId);
+  workspace.classList.toggle("has-files",count>0);
+  const title=zone.querySelector("strong");
+  if(title)title.textContent=count>0?filledLabel:emptyLabel;
+ }
+ function fileCard(file,index,total,onMove,onRemove,detail,{imagePreview=false,label="File",movable=true}={}){
+  const el=document.createElement("article");el.className="pdf-file-card";
+
+  const preview=document.createElement("div");preview.className="pdf-card-preview";
+  if(imagePreview){
+   const img=document.createElement("img");img.className="pdf-card-thumb";img.alt=file.name;
+   const url=URL.createObjectURL(file);
+   const cleanup=()=>URL.revokeObjectURL(url);
+   img.addEventListener("load",cleanup,{once:true});
+   img.addEventListener("error",cleanup,{once:true});
+   img.src=url;
+   preview.append(img);
+  }else{
+   preview.innerHTML='<svg class="pdf-card-document" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h6"/></svg>';
+  }
+
+  const position=document.createElement("span");position.className="pdf-card-position";position.textContent=label+" "+(index+1);
+  preview.append(position);
+
+  const actions=document.createElement("div");actions.className="pdf-card-actions";
+  if(movable){
+   const up=document.createElement("button");up.type="button";up.textContent="↑";up.title="Move up";up.disabled=index===0;
+   up.onclick=event=>{event.preventDefault();event.stopPropagation();onMove(index,index-1);};
+   const down=document.createElement("button");down.type="button";down.textContent="↓";down.title="Move down";down.disabled=index===total-1;
+   down.onclick=event=>{event.preventDefault();event.stopPropagation();onMove(index,index+1);};
+   actions.append(up,down);
+  }
+  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.title="Remove";remove.className="remove";
+  remove.onclick=event=>{event.preventDefault();event.stopPropagation();onRemove(index);};
+  actions.append(remove);
+  preview.append(actions);
+
+  const copy=document.createElement("div");copy.className="pdf-card-copy";
+  const name=document.createElement("strong");name.textContent=file.name;name.title=file.name;
   const meta=document.createElement("span");meta.textContent=detail||formatBytes(file.size);
   copy.append(name,meta);
-  const actions=document.createElement("div");actions.className="pdf-row-actions";
-  const up=document.createElement("button");up.type="button";up.textContent="↑";up.title="Move up";up.disabled=index===0;up.onclick=()=>onMove(index,index-1);
-  const down=document.createElement("button");down.type="button";down.textContent="↓";down.title="Move down";down.disabled=index===total-1;down.onclick=()=>onMove(index,index+1);
-  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.title="Remove";remove.className="remove";remove.onclick=()=>onRemove(index);
-  actions.append(up,down,remove);
-  el.append(number,copy,actions);
+
+  el.append(preview,copy);
   return el;
  }
  function renderImages(){
   const target=$("pdf-image-list");target.replaceChildren();
-  state.images.forEach((file,index)=>target.append(row(
+  state.images.forEach((file,index)=>target.append(fileCard(
    file,index,state.images.length,
    (a,b)=>{state.images=moveItem(state.images,a,b);renderImages();},
-   i=>{state.images.splice(i,1);renderImages();}
+   i=>{state.images.splice(i,1);renderImages();},
+   formatBytes(file.size),
+   {imagePreview:true,label:"Page"}
   )));
+  syncWorkspace("pdf-image-workspace","pdf-image-drop",state.images.length,"Add images","Add more");
   $("pdf-images-create").disabled=!state.images.length;
  }
  async function addMerge(files){
@@ -74,21 +108,30 @@ export function initPopupPdfTools({ensureAccess}={}){
  }
  function renderMerge(){
   const target=$("pdf-merge-list");target.replaceChildren();
-  state.merge.forEach((file,index)=>target.append(row(
+  state.merge.forEach((file,index)=>target.append(fileCard(
    file,index,state.merge.length,
    (a,b)=>{state.merge=moveItem(state.merge,a,b);renderMerge();},
    i=>{state.mergePages.delete(state.merge[i]);state.merge.splice(i,1);renderMerge();},
-   formatBytes(file.size)+" · "+(state.mergePages.get(file)||"?")+" pages"
+   formatBytes(file.size)+" · "+(state.mergePages.get(file)||"?")+" pages",
+   {label:"PDF"}
   )));
+  syncWorkspace("pdf-merge-workspace","pdf-merge-drop",state.merge.length,"Add PDF documents","Add more");
   $("pdf-merge-create").disabled=!state.merge.length;
  }
  function renderCompress(){
   const target=$("pdf-compress-file");target.replaceChildren();
-  if(!state.compress){$("pdf-compress-create").disabled=true;return;}
+  if(!state.compress){
+   syncWorkspace("pdf-compress-workspace","pdf-compress-drop",0,"Select a PDF","Replace PDF");
+   $("pdf-compress-create").disabled=true;
+   return;
+  }
   const file=state.compress;
-  const el=row(file,0,1,()=>{},()=>{state.compress=null;renderCompress();},formatBytes(file.size));
-  el.querySelectorAll(".pdf-row-actions button").forEach((button,i)=>{if(i<2)button.remove();});
-  target.append(el);
+  target.append(fileCard(
+   file,0,1,()=>{},()=>{state.compress=null;renderCompress();},
+   formatBytes(file.size),
+   {label:"PDF",movable:false}
+  ));
+  syncWorkspace("pdf-compress-workspace","pdf-compress-drop",1,"Select a PDF","Replace PDF");
   $("pdf-compress-create").disabled=false;
  }
 
