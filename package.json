@@ -1,12 +1,12 @@
 {
   "name": "batchsave-pro",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "description": "BatchSave Pro Chrome Manifest V3 extension",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/popup/popup.js && node --check src/settings/settings.js && node --check src/pdf-tools/pdf-tools.js && node --check src/lib/pdf-tools-core.js && node --check src/background/service-worker.js && node --check src/lib/files.js && node --check src/services/auth.js && node --check src/services/auth-login.js && node --check src/services/auth-recovery.js && node --check src/lib/zip.js && node --check src/services/gmail.js && node --check src/gmail/gmail-page.js && node --check src/services/gmail-visible.js && node --check src/lib/download-batch.js && node --check src/lib/download-plan.js && node --check src/lib/scan-state.js"
+    "check": "node --check src/popup/popup.js && node --check src/popup/pdf-tools-panel.js && node --check src/settings/settings.js && node --check src/pdf-tools/pdf-tools.js && node --check src/lib/pdf-tools-core.js && node --check src/background/service-worker.js && node --check src/lib/files.js && node --check src/services/auth.js && node --check src/services/auth-login.js && node --check src/services/auth-recovery.js && node --check src/lib/zip.js && node --check src/services/gmail.js && node --check src/gmail/gmail-page.js && node --check src/services/gmail-visible.js && node --check src/lib/download-batch.js && node --check src/lib/download-plan.js && node --check src/lib/scan-state.js"
   },
   "dependencies": {
     "pdf-lib": "1.17.1"
