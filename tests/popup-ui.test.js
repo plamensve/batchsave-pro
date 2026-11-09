@@ -100,9 +100,10 @@ test("login password field is standard, visible on demand and preserved after in
  assert.ok(!html.match(/id="password"[^>]+readonly/));
  assert.ok(html.includes('id="toggle-password"'));
  assert.match(js,/passwordInput\.type=showing\?"password":"text"/);
- assert.match(js,/if\(bad\)passwordInput\.focus\(\)/);
+ assert.match(js,/if\(bad\)\{/);
+ assert.match(js,/passwordInput\.focus\(\)/);
  assert.ok(!js.includes('if(bad){\n   clearPasswordInput()'));
- assert.match(js,/The password was kept in the field/);
+ assert.match(js,/does not trim or alter password characters/);
 });
 test("Create account opens a dedicated registration form instead of reusing login fields",()=>{
  for(const id of ["signup-form","signup-name","signup-email","signup-password","signup-confirm","signup-submit","signup-cancel"])
@@ -212,7 +213,8 @@ test("reset clears password but invalid login preserves it for inspection",()=>{
  assert.match(js,/function clearPasswordInput\(\)/);
  assert.ok(!js.includes("readOnly"));
  assert.ok(!js.includes("unlockPasswordInput"));
- assert.match(js,/if\(bad\)passwordInput\.focus\(\)/);
+ assert.match(js,/if\(bad\)\{/);
+ assert.match(js,/passwordInput\.focus\(\)/);
  assert.match(js,/clearPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
 });
 
