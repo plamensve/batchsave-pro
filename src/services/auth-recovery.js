@@ -19,7 +19,7 @@ async function recoveryRequest(path,options={}){
 
 // Recovery never reads, writes, refreshes or clears the extension login session.
 export async function requestPasswordReset(email){
- const address=String(email||"").trim();
+ const address=String(email||"").trim().toLowerCase();
  if(!address)throw Error("Email is required.");
  return recoveryRequest("/auth/v1/recover?redirect_to="+encodeURIComponent(PASSWORD_RECOVERY_REDIRECT),{
   method:"POST",
