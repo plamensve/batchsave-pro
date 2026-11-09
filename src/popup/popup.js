@@ -189,15 +189,17 @@ async function restoreScanState(){
  return true;
 }
 function updateCount(){
- const count=state.selected.size,available=!state.busy;
+ const count=state.selected.size,visible=filtered().length,available=!state.busy;
  $("selected").textContent=count+" selected";
  $("download").disabled=!count||!available;
  const label=$("download").querySelector(".button-label");
  if(label)label.textContent=count>1?"Download ZIP ("+count+")":"Download file";
+ const zipCount=count||visible,zipLabel=$("download-zip").querySelector(".zip-label");
  $("download-zip").hidden=false;
- $("download-zip").disabled=!count||!available;
+ $("download-zip").disabled=!available||zipCount<2;
+ if(zipLabel)zipLabel.textContent=count?"Download ZIP ("+count+")":visible>=2?"ZIP all visible ("+visible+")":"Download ZIP";
  $("clear-selection").disabled=!count||state.busy;
- $("select-all").disabled=!filtered().length||state.busy;
+ $("select-all").disabled=!visible||state.busy;
 }
 function render(){
  const shown=filtered(),target=$("results");target.replaceChildren();
@@ -214,7 +216,7 @@ function render(){
   checkbox.setAttribute("aria-label","Select "+f.name);
   checkbox.checked=state.selected.has(fileKey(f));
   checkbox.addEventListener("change",()=>{
-   checkbox.checked?state.selected.add(fileKey(f)):state.selected.delete(fileKey(f));updateCount();
+   checkbox.checked?state.selected.add(fileKey(f)):state.selected.delete(fileKey(f));updateCount();queuePersistScanState();
   });
   const meta=document.createElement("label");meta.className="file-meta";meta.htmlFor=checkbox.id;
   const title=document.createElement("span");title.className="file-name";title.textContent=f.name;
@@ -249,11 +251,15 @@ function render(){
  $("count").textContent=shown.length+" shown · "+state.files.length+(isEmail({source:state.source})?" Gmail attachments":" page files");
  updateCount();
 }
-function showFiles(files,source){
+function showFiles(files,source,context={}){
  state.files=source==="page"?uniqueFiles(files):files;
  state.source=source;state.selected.clear();
+ state.scanTabId=Number.isInteger(context.tabId)?context.tabId:null;
+ state.scanTabUrl=context.tabUrl||"";
  if(source==="gmail-visible"&&state.files.length===1)state.selected.add(fileKey(state.files[0]));
- $("search").disabled=false;$("type").disabled=false;$("type").value="relevant";render();
+ $("search").disabled=false;$("search").value="";
+ $("type").disabled=false;$("type").value="relevant";render();
+ queuePersistScanState();
 }
 function displayProfile(user,plan){
  const identity=user?.user_metadata?.full_name||user?.user_metadata?.name||user?.email?.split("@")[0]||"BatchSave account";
