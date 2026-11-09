@@ -65,14 +65,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
   status.dataset.kind=kind;
  };
 
- window.addEventListener("error",event=>{
-  setStatus("Reset page error: "+(event.message||"unexpected browser error")+". Send a new reset email and try again.","error");
- });
- window.addEventListener("unhandledrejection",event=>{
-  const reason=event.reason?.message||String(event.reason||"unexpected browser error");
-  setStatus("Reset page error: "+reason+". Send a new reset email and try again.","error");
- });
-
  if(error){
   setStatus("Recovery link error: "+error+". Send a new reset email from the BatchSave Pro extension.","error");
   return;
@@ -108,7 +100,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
   submit.textContent="Updating…";
   setStatus("Updating your password…");
   try{
-   const response=await fetch("/auth/v1/user",{
+   const response=await fetch("${project}/auth/v1/user",{
     method:"PUT",
     headers:{
      "apikey":"${key}",
@@ -144,7 +136,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 </html>`;
  const headers=new Headers();
  headers.set("Content-Type","text/html; charset=utf-8");
- headers.set("Content-Security-Policy",`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'`);
+ headers.set("Content-Security-Policy",`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src ${project}; base-uri 'none'; frame-ancestors 'none'`);
  headers.set("Referrer-Policy","no-referrer");
  headers.set("Cache-Control","no-store, max-age=0");
  headers.set("X-Content-Type-Options","nosniff");
