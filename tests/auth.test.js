@@ -145,3 +145,11 @@ test("billing errors include missing backend secret names in the surfaced messag
  assert.match(source,/payload\.missing/);
  assert.match(source,/Missing:/);
 });
+
+test("password recovery normalizes email casing and whitespace",async()=>{
+ let body;
+ await withMock(async(_url,options)=>{body=JSON.parse(options.body);return new Response("{}",{status:200});},async()=>{
+  await requestPasswordReset("  Test.User@Example.COM  ");
+ });
+ assert.deepEqual(body,{email:"test.user@example.com"});
+});
