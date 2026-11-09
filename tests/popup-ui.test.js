@@ -95,13 +95,14 @@ test("multi-select primary download exits through ZIP before any individual-down
  assert.ok(plan>=0&&zip>plan&&exit>zip&&batch>exit);
 });
 
-test("login password field uses standard current-password behavior and clears only after a failed login",()=>{
+test("login password field is standard, visible on demand and preserved after invalid credentials",()=>{
  assert.match(html,/id="password"[^>]+autocomplete="current-password"/);
  assert.ok(!html.match(/id="password"[^>]+readonly/));
- assert.ok(!js.includes("unlockPasswordInput"));
- assert.ok(!js.includes("passwordInput.readOnly"));
- assert.match(js,/clearPasswordInput\(\);\n   passwordInput\.focus\(\)/);
- assert.match(js,/Supabase rejected that password/);
+ assert.ok(html.includes('id="toggle-password"'));
+ assert.match(js,/passwordInput\.type=showing\?"password":"text"/);
+ assert.match(js,/if\(bad\)passwordInput\.focus\(\)/);
+ assert.ok(!js.includes('if(bad){\n   clearPasswordInput()'));
+ assert.match(js,/The password was kept in the field/);
 });
 test("Create account opens a dedicated registration form instead of reusing login fields",()=>{
  for(const id of ["signup-form","signup-name","signup-email","signup-password","signup-confirm","signup-submit","signup-cancel"])
@@ -203,11 +204,11 @@ test("premium header uses dark navy treatment with a gold accent",()=>{
  assert.match(css,/color:#ffdbe1/);
 });
 
-test("reset and failed login clear the password while keeping the field immediately editable",()=>{
+test("reset clears password but invalid login preserves it for inspection",()=>{
  assert.match(js,/function clearPasswordInput\(\)/);
  assert.ok(!js.includes("readOnly"));
  assert.ok(!js.includes("unlockPasswordInput"));
- assert.match(js,/clearPasswordInput\(\);\n   passwordInput\.focus\(\)/);
+ assert.match(js,/if\(bad\)passwordInput\.focus\(\)/);
  assert.match(js,/clearPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
 });
 
@@ -280,8 +281,17 @@ test("Settings button opens the registered Chrome options page",()=>{
  assert.match(css,/\.header-settings/);
 });
 
-test("signed-out login view is intentionally taller than the old compact shell",()=>{
- assert.match(css,/html\.signed-out,html\.signed-out body\{\n height:360px;/);
- assert.match(css,/html\.signed-out \.auth-panel\{\n margin:18px 16px 0;/);
+test("signed-out login view is taller than the original but uses the space purposefully",()=>{
+ assert.match(css,/html\.signed-out,html\.signed-out body\{\n height:318px;/);
+ assert.match(css,/html\.signed-out \.auth-panel\{\n margin:12px 16px 0;/);
  assert.match(css,/html\.signed-out \.auth-panel input\{\n height:40px;/);
+ assert.match(html,/class="auth-hint"/);
+ assert.match(css,/\.auth-hint\{/);
+});
+
+test("signed-out login offers password visibility without adding another auth action",()=>{
+ assert.match(html,/id="toggle-password"/);
+ assert.match(html,/aria-label="Show password"/);
+ assert.match(css,/\.password-toggle/);
+ assert.match(js,/Hide password/);
 });

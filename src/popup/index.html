@@ -46,14 +46,23 @@
 
   <form id="auth-form" hidden autocomplete="off">
    <input id="email" type="email" placeholder="Email address" autocomplete="email" required aria-label="Account email">
-   <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required aria-label="Account password">
+   <div class="password-field">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required aria-label="Account password">
+    <button id="toggle-password" class="password-toggle" type="button" aria-label="Show password" title="Show password">
+     <svg class="ui-icon eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+    </button>
+   </div>
    <div class="auth-actions">
-    <button id="login" class="secondary" type="submit">Sign in</button>
+    <button id="login" class="primary login-primary" type="submit">Sign in</button>
     <button id="register" class="secondary create-account-trigger" type="button">
      <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M5 21a7 7 0 0 1 14 0M19 8v4M17 10h4"/></svg>
      <span>Create account</span>
     </button>
     <button id="reset-password" class="secondary" type="button">Send reset email</button>
+   </div>
+   <div class="auth-hint">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 2.7 8.2 7 10 4.3-1.8 7-5.6 7-10V6l-7-3Z"/><path d="m9.5 12 1.8 1.8 3.4-4"/></svg>
+    <span>Secure access to your BatchSave account. If the password is not accepted, verify it with the eye icon or use Send reset email.</span>
    </div>
   </form>
 
