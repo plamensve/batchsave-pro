@@ -1,4 +1,4 @@
-import test from "node:test";import assert from "node:assert/strict";
+import test from "node:test";import assert from "node:assert/strict";import {readFileSync} from "node:fs";
 import {scanVisibleGmailAttachments,downloadVisibleGmailAttachment} from "../src/services/gmail-visible.js";
 function dom(){
  let clicks=0;
