@@ -106,7 +106,7 @@ test("registration messaging does not claim an existing account was newly create
 });
 
 test("download button depends on selection and busy state, not cached license state",()=>{
- assert.match(js,/const count=state\.selected\.size,available=!state\.busy/);
+ assert.match(js,/const count=state\.selected\.size,visible=filtered\(\)\.length,available=!state\.busy/);
  assert.ok(!js.includes("available=!state.busy&&state.access"));
 });
 test("all multi-file sources are routed through ZIP planning",()=>{
@@ -140,7 +140,8 @@ test("premium popup design keeps core behavior controls and polished visual hook
  assert.match(js,/box\.dataset\.tone/);
 });
 test("premium redesign does not remove download, auth, Stripe, Gmail or ZIP event paths",()=>{
- assert.match(js,/billingFunction\(fn\)/);
+ assert.match(js,/billingFunction\("create-checkout"\)/);
+ assert.match(js,/billingFunction\("billing-portal"\)/);
  assert.match(js,/downloadPlan\(files,state\.source\)/);
  assert.match(js,/downloadVisibleGmailAttachment/);
  assert.match(js,/downloadZipFiles\(files\)/);
@@ -155,7 +156,8 @@ test("v0.9.4 uses real SVG icons and a wider file workspace",()=>{
  assert.match(js,/function vectorIcon\(/);
  assert.match(js,/VECTOR_ICONS/);
  assert.match(css,/width:620px/);
- assert.match(css,/min-height:185px/);
+ assert.match(css,/\.results\{margin:0 12px 5px;flex:1 1 0;min-height:0/);
+ assert.match(css,/html\.full-workspace \.results\{min-height:360px\}/);
  for(const glyph of ["⌗","⇩","↪","📎","▧","▤"])
   assert.ok(!html.includes(glyph)&&!css.includes(glyph)&&!js.includes(glyph),"legacy glyph icon remains: "+glyph);
 });
