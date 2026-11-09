@@ -945,3 +945,47 @@ html.signed-out .auth-panel form{
  margin-top:1px;
  color:#2e69c9;
 }
+
+
+/* v0.12.0 — flat signed-in header + popup workspace tabs */
+.header-account-inline{
+ position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;
+ margin-top:8px;padding-top:7px;border-top:1px solid rgba(174,207,250,.20);
+ background:transparent;box-shadow:none;
+}
+.account-info-inline{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.account-info-inline strong{
+ max-width:170px;color:#fff;font-size:10.5px;font-weight:820;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.account-info-inline #account-email{
+ min-width:0;color:#cfe0fa;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.account-separator{color:rgba(215,231,255,.52);font-size:10px}
+.header-account-state-inline{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-shrink:0}
+.header-account-inline .account-status{
+ min-height:19px;padding:2px 6px;border:1px solid rgba(112,226,182,.18);
+ color:#dff8ee;background:rgba(18,139,98,.22);font-size:8px
+}
+.header-account-inline .status-svg{width:12px;height:12px;flex-basis:12px;color:#6ee0b2}
+.header-account-inline #account-license{
+ max-width:180px;margin:0;padding:2px 6px;border:1px solid rgba(161,198,246,.18);border-radius:999px;
+ color:#e9f3ff;background:rgba(12,40,82,.24);font-size:8px;font-weight:760;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.workspace-tabs{
+ display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:5px 12px 6px;padding:4px;flex:0 0 auto;
+ border:1px solid #d7e2f1;border-radius:12px;background:linear-gradient(180deg,#f7faff,#eef4fc);
+ box-shadow:inset 0 1px 0 #fff
+}
+.workspace-tab{
+ display:flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:7px 10px;
+ border:1px solid transparent;border-radius:9px;color:#54708f;background:transparent;font-size:10.5px;font-weight:820
+}
+.workspace-tab .ui-icon{width:16px;height:16px}
+.workspace-tab:not(.active):hover{color:#2459a8;border-color:#c9d9ef;background:#f8fbff}
+.workspace-tab.active{
+ color:#fff;border-color:#1c57d0;background:linear-gradient(135deg,#2b70ed,#174bc7);
+ box-shadow:0 5px 12px rgba(37,95,222,.18),inset 0 1px 0 rgba(255,255,255,.15)
+}
+.workspace-panel{flex:1 1 auto;min-height:0}
+.downloads-panel{display:flex;flex-direction:column;min-height:0}
