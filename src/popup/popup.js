@@ -118,12 +118,17 @@ function authFeedback(msg,kind="info"){
 
 const passwordInput=$("password");
 function unlockPasswordInput(){
+ if(!passwordInput.readOnly)return;
  passwordInput.readOnly=false;
  passwordInput.value="";
 }
-passwordInput.value="";
-passwordInput.addEventListener("pointerdown",unlockPasswordInput,{once:true});
-passwordInput.addEventListener("focus",unlockPasswordInput,{once:true});
+function lockPasswordInput(){
+ passwordInput.value="";
+ passwordInput.readOnly=true;
+}
+lockPasswordInput();
+passwordInput.addEventListener("pointerdown",unlockPasswordInput);
+passwordInput.addEventListener("focus",unlockPasswordInput);
 setTimeout(()=>{if(passwordInput.readOnly)passwordInput.value="";},0);
 
 function message(msg){
@@ -325,8 +330,7 @@ $("auth-form").addEventListener("submit",async ev=>{
  }catch(e){
   const bad=/invalid login credentials/i.test(e.message);
   if(bad){
-   passwordInput.value="";
-   passwordInput.readOnly=false;
+   lockPasswordInput();
    passwordInput.focus();
   }
   authFeedback(
@@ -358,8 +362,7 @@ $("reset-password").addEventListener("click",async()=>{
   authFeedback("Requesting password reset email…");
   await chrome.storage.local.set({batchsaveLastEmail:email});
   await requestPasswordReset(email);
-  passwordInput.value="";
-  passwordInput.readOnly=true;
+  lockPasswordInput();
   authFeedback("Reset request accepted. Check the inbox and spam folder of "+email+". Open the NEWEST password reset email, set a new password, and wait for “Password updated successfully”. Then reopen BatchSave Pro, click the password field, and type the NEW password.","success");
   notice("Password reset email sent. Use the newest message.");
  }

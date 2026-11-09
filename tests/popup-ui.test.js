@@ -194,3 +194,13 @@ test("premium header uses dark navy treatment with a gold accent",()=>{
  assert.match(css,/\.workspace-button/);
  assert.match(css,/color:#eef6ff/);
 });
+
+test("password field can be re-unlocked after reset or failed login",()=>{
+ assert.match(js,/function lockPasswordInput\(\)/);
+ assert.match(js,/if\(!passwordInput\.readOnly\)return/);
+ assert.match(js,/passwordInput\.addEventListener\("pointerdown",unlockPasswordInput\)/);
+ assert.match(js,/passwordInput\.addEventListener\("focus",unlockPasswordInput\)/);
+ assert.ok(!js.includes('{once:true}'));
+ assert.match(js,/lockPasswordInput\(\);\n   passwordInput\.focus\(\)/);
+ assert.match(js,/lockPasswordInput\(\);\n  authFeedback\("Reset request accepted/);
+});
