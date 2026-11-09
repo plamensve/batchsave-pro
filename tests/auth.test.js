@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {signOut,session,accountUser} from "../src/services/auth.js";
+import {signUp,signOut,session,accountUser} from "../src/services/auth.js";
 import {signIn} from "../src/services/auth-login.js";
 import {requestPasswordReset,PASSWORD_RECOVERY_REDIRECT} from "../src/services/auth-recovery.js";
 import {readFileSync} from "node:fs";
@@ -152,4 +152,26 @@ test("password recovery normalizes email casing and whitespace",async()=>{
   await requestPasswordReset("  Test.User@Example.COM  ");
  });
  assert.deepEqual(body,{email:"test.user@example.com"});
+});
+
+test("account creation sends normalized email and full-name metadata",async()=>{
+ let seen;
+ await withMock(async(url,options)=>{
+  seen={url,body:JSON.parse(options.body)};
+  return new Response(JSON.stringify({id:"new-user"}),{status:200,headers:{"content-type":"application/json"}});
+ },async()=>{
+  await signUp("  New.User@Example.COM  ","StrongPass123!",{fullName:"  New User  "});
+ });
+ assert.match(seen.url,/\/auth\/v1\/signup\?redirect_to=/);
+ assert.deepEqual(seen.body,{
+  email:"new.user@example.com",
+  password:"StrongPass123!",
+  data:{full_name:"New User"}
+ });
+});
+test("account creation validates name and password before network request",async()=>{
+ await withMock(async()=>{throw Error("network should not be called");},async()=>{
+  await assert.rejects(()=>signUp("user@example.com","short",{fullName:"User"}),/at least 8/);
+  await assert.rejects(()=>signUp("user@example.com","StrongPass123!",{fullName:""}),/Full name is required/);
+ });
 });

@@ -280,7 +280,7 @@ function displayProfile(user,plan){
  $("account-details").hidden=false;
 }
 async function refreshAccount(){
- $("auth-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;
+ $("auth-form").hidden=true;$("signup-form").hidden=true;$("billing-actions").hidden=true;$("account-details").hidden=true;
  let s;
  try{
   s=await session();
@@ -309,7 +309,8 @@ async function refreshAccount(){
   $("billing-actions").hidden=false;
   const tester=info?.subscription_status==="tester";
    $("upgrade").hidden=!tester&&(state.access||["active","trialing"].includes(info?.subscription_status));
-   $("upgrade").textContent=tester?"Test Stripe checkout · €9.90/month":"Start trial · €9.90/month";
+   const upgradeLabel=$("upgrade").querySelector(".upgrade-label");
+   if(upgradeLabel)upgradeLabel.textContent=tester?"Test Stripe checkout · €9.90/month":"Start 3-day free trial · €9.90/month";
    $("manage").hidden=!info?.subscription_status||tester;
  }catch(e){
   state.access=false;displayProfile(current,"License check unavailable");
@@ -341,18 +342,51 @@ $("auth-form").addEventListener("submit",async ev=>{
   );
  }finally{button.disabled=false;}
 });
-$("register").addEventListener("click",async()=>{
- const email=$("email").value.trim(),password=$("password").value;
- if(!email||password.length<6){notice("Enter an email and password of at least 6 characters.");return;}
- $("register").disabled=true;
+function openSignupForm(){
+ const email=$("email").value.trim();
+ $("auth-form").hidden=true;
+ $("signup-form").hidden=false;
+ $("signup-email").value=email;
+ $("signup-password").value="";
+ $("signup-confirm").value="";
+ authFeedback("");
+ $("signup-name").focus();
+}
+function closeSignupForm(){
+ $("signup-form").hidden=true;
+ $("auth-form").hidden=false;
+ if($("signup-email").value.trim())$("email").value=$("signup-email").value.trim();
+ $("signup-password").value="";
+ $("signup-confirm").value="";
+ authFeedback("");
+ $("email").focus();
+}
+$("register").addEventListener("click",openSignupForm);
+$("signup-cancel").addEventListener("click",closeSignupForm);
+$("signup-form").addEventListener("submit",async event=>{
+ event.preventDefault();
+ const name=$("signup-name").value.trim();
+ const email=$("signup-email").value.trim();
+ const password=$("signup-password").value;
+ const confirm=$("signup-confirm").value;
+ if(!name){authFeedback("Enter your full name.","error");$("signup-name").focus();return;}
+ if(!email){authFeedback("Enter your email address.","error");$("signup-email").focus();return;}
+ if(password.length<8){authFeedback("Use a password of at least 8 characters.","error");$("signup-password").focus();return;}
+ if(password!==confirm){authFeedback("The two passwords do not match.","error");$("signup-confirm").focus();return;}
+ const button=$("signup-submit");button.disabled=true;
  try{
-  authFeedback("Checking registration…");
-  await signUp(email,password);
-  passwordInput.value="";
-  authFeedback("If this email is new, check your inbox and confirm it. If you already have an account, use Sign in or Send reset email instead of creating it again.","success");
-  notice("Registration request processed. Existing accounts should use Sign in or Reset password.");
- }
- catch(e){authFeedback("Registration failed: "+e.message,"error");}finally{$("register").disabled=false;}
+  authFeedback("Creating your BatchSave account…");
+  await signUp(email,password,{fullName:name});
+  await chrome.storage.local.set({batchsaveLastEmail:email.trim().toLowerCase()});
+  $("email").value=email.trim().toLowerCase();
+  $("signup-password").value="";$("signup-confirm").value="";
+  $("signup-form").hidden=true;$("auth-form").hidden=false;
+  lockPasswordInput();
+  authFeedback("Account creation request accepted. Check your email and confirm the account, then sign in with your password.","success");
+  notice("Account created · confirm your email before signing in.");
+ }catch(e){
+  authFeedback("Account creation failed: "+e.message,"error");
+ }finally{button.disabled=false;}
 });
 $("reset-password").addEventListener("click",async()=>{
  const email=$("email").value.trim();
@@ -374,15 +408,16 @@ $("logout").addEventListener("click",async()=>{
 });
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 $("upgrade").addEventListener("click",async()=>{
- const button=$("upgrade"),original=button.textContent;
+ const button=$("upgrade"),label=button.querySelector(".upgrade-label");
+ const original=label?.textContent||"Start 3-day free trial · €9.90/month";
  button.disabled=true;button.classList.add("billing-launching");
  const checkoutPromise=billingFunction("create-checkout");
  try{
   for(const n of [3,2,1]){
-   button.textContent="Opening Stripe · "+n;
+   if(label)label.textContent="Opening Stripe · "+n;
    await sleep(700);
   }
-  button.textContent="Opening Stripe…";
+  if(label)label.textContent="Opening Stripe…";
   const url=await checkoutPromise;
   await chrome.tabs.create({url});
   notice("Stripe Checkout opened in a new tab.");
@@ -391,7 +426,7 @@ $("upgrade").addEventListener("click",async()=>{
  }finally{
   button.classList.remove("billing-launching");
   button.disabled=false;
-  button.textContent=original;
+  if(label)label.textContent=original;
  }
 });
 $("manage").addEventListener("click",async()=>{

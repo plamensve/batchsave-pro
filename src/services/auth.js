@@ -25,9 +25,18 @@ async function locked(work){
  if(globalThis.navigator?.locks?.request)return globalThis.navigator.locks.request(authLockName,{mode:"exclusive"},work);
  return work();
 }
-export async function signUp(email,password){
+export async function signUp(email,password,{fullName=""}={}){
+ const address=String(email||"").trim().toLowerCase();
+ const secret=String(password??"");
+ const name=String(fullName||"").trim();
+ if(!name)throw Error("Full name is required.");
+ if(!address)throw Error("Email is required.");
+ if(secret.length<8)throw Error("Password must be at least 8 characters.");
  const redirect="https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/checkout-return?result=email-confirmed";
- return request("/auth/v1/signup?redirect_to="+encodeURIComponent(redirect),{method:"POST",body:JSON.stringify({email,password})});
+ return request("/auth/v1/signup?redirect_to="+encodeURIComponent(redirect),{
+  method:"POST",
+  body:JSON.stringify({email:address,password:secret,data:{full_name:name}})
+ });
 }
 export async function signOut(){await locked(()=>chrome.storage.local.remove(SESSION_KEY));}
 async function refreshStored(){
