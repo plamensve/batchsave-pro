@@ -82,6 +82,27 @@ Deno.serve(async (req) => {
     }
 
     const db = createClient(supabaseUrl, serviceKey);
+    // Unique promotional CUSTOMER count is separate from Stripe's technical
+    // redemption counter, which can increment twice for a single checkout.
+    // One completed Checkout Session can record at most one entry per code/user.
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const applied = session.discounts?.find((d) => !!d.promotion_code);
+      const promoId = applied && (typeof applied.promotion_code === "string"
+        ? applied.promotion_code : applied.promotion_code?.id);
+      const customerId = typeof subscription.customer === "string"
+        ? subscription.customer : subscription.customer.id;
+      if (promoId && customerId && session.id) {
+        const {error:promoError} = await db.from("promotion_redemptions").insert({
+          stripe_promotion_code_id: promoId,
+          user_id: userId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: id,
+          stripe_checkout_session_id: session.id,
+        });
+        if (promoError && promoError.code !== "23505") throw promoError;
+      }
+    }
     const {error} = await db.from("marketing_conversion_events").insert({
       stripe_event_id: event.id,
       stripe_subscription_id: id,
