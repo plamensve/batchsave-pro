@@ -5,7 +5,7 @@ Deno.serve((req)=>{
   return new Response("Method not allowed",{status:405,headers:{"Allow":"GET","Cache-Control":"no-store"}});
  }
  const incoming=new URL(req.url);
- const target=new URL(STATUS_PAGE);
+ const target=new URL(incoming.searchParams.get("result")==="email-confirmed" ? "https://batchsavepro.com/signup-confirmed.html" : STATUS_PAGE);
  const result=incoming.searchParams.get("result");
  if(result)target.searchParams.set("result",result);
  return new Response(null,{
