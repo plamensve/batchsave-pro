@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.account-recovery]
 verify_jwt = false
+
+[functions.marketing-stripe-webhook]
+verify_jwt = false
