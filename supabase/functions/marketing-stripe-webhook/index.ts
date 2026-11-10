@@ -73,14 +73,6 @@ Deno.serve(async (req) => {
     const userId = subscription.metadata.batchsave_user_id;
     if (!userId || !UUID.test(userId)) return RESULT("unmapped");
 
-    if (kind === "trial_started") {
-      // Checkout may finish without a trial when a customer has already used one.
-      if (!subscription.trial_start || !subscription.trial_end ||
-          !(subscription.trial_start <= event.created &&
-            event.created <= subscription.trial_end)) return RESULT("no trial");
-      timestamp = subscription.trial_start;
-    }
-
     const db = createClient(supabaseUrl, serviceKey);
     // Unique promotional CUSTOMER count is separate from Stripe's technical
     // redemption counter, which can increment twice for a single checkout.
@@ -102,6 +94,14 @@ Deno.serve(async (req) => {
         });
         if (promoError && promoError.code !== "23505") throw promoError;
       }
+    }
+    if (kind === "trial_started") {
+      // Checkout may finish without a trial. Record its promotion first,
+      // but do not misclassify it as a trial conversion.
+      if (!subscription.trial_start || !subscription.trial_end ||
+          !(subscription.trial_start <= event.created &&
+            event.created <= subscription.trial_end)) return RESULT("no trial");
+      timestamp = subscription.trial_start;
     }
     const {error} = await db.from("marketing_conversion_events").insert({
       stripe_event_id: event.id,
