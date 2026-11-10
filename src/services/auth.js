@@ -32,7 +32,7 @@ export async function signUp(email,password,{fullName=""}={}){
  if(!name)throw Error("Full name is required.");
  if(!address)throw Error("Email is required.");
  if(secret.length<8)throw Error("Password must be at least 8 characters.");
- const redirect="https://batchsavepro.com/signup-confirmed.html";
+ const redirect="https://gcfyaaqqsqrjwujpymjz.supabase.co/functions/v1/checkout-return?result=email-confirmed";
  return request("/auth/v1/signup?redirect_to="+encodeURIComponent(redirect),{
   method:"POST",
   body:JSON.stringify({email:address,password:secret,data:{full_name:name}})
