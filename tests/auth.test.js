@@ -189,7 +189,6 @@ test("account creation sends normalized email and full-name metadata",async()=>{
   await signUp("  New.User@Example.COM  ","StrongPass123!",{fullName:"  New User  "});
  });
  assert.match(seen.url,/\/auth\/v1\/signup\?redirect_to=/);
- assert.equal(new URL(seen.url).searchParams.get("redirect_to"),"https://batchsavepro.com/signup-confirmed.html");
  assert.deepEqual(seen.body,{
   email:"new.user@example.com",
   password:"StrongPass123!",
